@@ -94,7 +94,7 @@ function renderCatalogue() {
         <div class="era-block">
           <div class="era-heading"><span>${escapeHtml(era.name)}</span><span class="era-count">${era.rows.length} item${era.rows.length === 1 ? '' : 's'}</span></div>
           <div class="table-wrap"><table>
-            <colgroup><col style="width:9%"><col style="width:28%"><col style="width:13%"><col style="width:12%"><col style="width:12%"><col style="width:12%"><col style="width:14%"></colgroup>
+            <colgroup><col style="width:8%"><col style="width:22%"><col style="width:13%"><col style="width:15%"><col style="width:13%"><col style="width:13%"><col style="width:16%"></colgroup>
             <thead><tr><th scope="col">ID</th><th scope="col">Title</th><th scope="col">Doctor</th><th scope="col">Range</th><th scope="col">Release</th><th scope="col">Library</th><th scope="col">Release date</th></tr></thead>
             <tbody>${era.rows.map(row => `<tr>
               <td class="id-cell">${escapeHtml(field(row, 'ID') || '—')}</td>
