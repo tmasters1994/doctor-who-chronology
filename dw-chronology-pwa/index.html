@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b1730">
+  <meta name="description" content="A personal Doctor Who chronology archive.">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+  <title>Doctor Who Chronology</title>
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-copy">
+      <p class="eyebrow">PERSONAL ARCHIVE · CHRONOLOGY</p>
+      <h1>Doctor Who <span>Chronology</span></h1>
+      <p class="subtitle">A guided index through the Doctor's lives and adventures.</p>
+    </div>
+    <button id="refreshButton" class="button button-primary" type="button"><span aria-hidden="true">↻</span> Refresh catalogue</button>
+  </header>
+
+  <main>
+    <section class="toolbar" aria-label="Catalogue controls">
+      <label class="search-label"><span>Search archive</span><input id="searchInput" type="search" placeholder="Title, ID, Doctor, release…" autocomplete="off"></label>
+      <label><span>Group</span><select id="groupFilter"><option value="">All groups</option></select></label>
+      <label><span>Era</span><select id="eraFilter"><option value="">All eras</option></select></label>
+      <label><span>Range</span><select id="rangeFilter"><option value="">All ranges</option></select></label>
+      <label><span>Doctor</span><select id="doctorFilter"><option value="">All Doctors</option></select></label>
+      <label><span>Library</span><select id="libraryFilter"><option value="">All items</option></select></label>
+    </section>
+
+    <div class="status-line"><p id="statusText" role="status">Loading catalogue…</p><label class="compact-toggle" for="compactViewToggle"><input id="compactViewToggle" type="checkbox"> <span>Compact view</span></label><p id="countText"></p></div>
+    <section id="catalogue" class="catalogue" aria-label="Chronology catalogue"></section>
+    <dialog id="detailPanel" class="detail-panel" aria-labelledby="detailTitle"></dialog>
+  </main>
+
+  <footer class="site-footer"><span>PERSONAL CHRONOLOGY ARCHIVE</span><span>Google Sheets · Live catalogue</span></footer>
+  <script src="app.js"></script>
+</body>
+</html>
