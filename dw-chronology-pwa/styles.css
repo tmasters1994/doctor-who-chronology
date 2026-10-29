@@ -55,10 +55,10 @@ td:not(:nth-child(2)) { white-space: nowrap; }
 tbody tr:last-child td { border-bottom: 0; }
 tbody tr:hover { background: rgba(215,169,107,.06); }
 .id-cell { color: var(--gold); font-size: .79rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.title-button { display: inline-block; max-width: 100%; padding: 0; border: 0; background: none; color: var(--text); font-weight: 700; text-align: left; white-space: normal; overflow-wrap: anywhere; cursor: pointer; }
+.title-button { display: inline-block; max-width: 100%; padding: 0; border: 0; background: none; color: var(--text); font-weight: 400; text-align: left; white-space: normal; overflow-wrap: anywhere; cursor: pointer; }
 .title-button:hover { color: var(--gold-light); text-decoration: underline; text-underline-offset: 3px; }
-.title-main { display: block; font-weight: 700; }
-.title-subtitle { display: block; font-weight: 400; }
+.title-main { display: block; font-weight: 400; }
+.title-subtitle { display: block; font-family: "Calibri Light", "Segoe UI Light", Calibri, "Segoe UI", Arial, sans-serif; font-weight: 200; }
 .detail-title .title-subtitle { margin-top: .12em; }
 .subline { display: block; color: var(--muted); font-size: .78rem; font-weight: 400; margin-top: 2px; }
 .tag { display: inline-block; max-width: 100%; border: 1px solid #354765; border-radius: 999px; padding: 2px 8px; color: #c7d1e0; font-size: .75rem; white-space: normal; overflow-wrap: anywhere; }
@@ -70,7 +70,8 @@ tbody tr:hover { background: rgba(215,169,107,.06); }
 .detail-title { margin: 0; font-size: clamp(1.7rem, 3vw, 2.5rem); letter-spacing: -.03em; line-height: 1.1; }
 .detail-heading { margin-top: 22px; }
 .detail-title .title-main, .detail-title .title-subtitle { display: block; }
-.detail-title .title-subtitle { margin-top: .12em; font-weight: 400; color: #d6deeb; }
+.detail-title .title-main { font-weight: 400; }
+.detail-title .title-subtitle { margin-top: .12em; font-family: "Calibri Light", "Segoe UI Light", Calibri, "Segoe UI", Arial, sans-serif; font-weight: 200; color: #d6deeb; }
 .detail-meta { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 22px; align-content: start; margin: 0; }
 .meta-item { padding: 13px 12px; border-bottom: 1px solid color-mix(in srgb, var(--detail-border) 72%, transparent); background: color-mix(in srgb, var(--detail-surface) 72%, transparent); }
 .meta-item:nth-child(odd) { border-radius: 7px 0 0 7px; }
