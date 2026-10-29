@@ -57,6 +57,12 @@ tbody tr:hover { background: rgba(215,169,107,.06); }
 .id-cell { color: var(--gold); font-size: .79rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .title-button { display: inline-block; max-width: 100%; padding: 0; border: 0; background: none; color: var(--text); font-weight: 400; text-align: left; white-space: normal; overflow-wrap: anywhere; cursor: pointer; }
 .title-button:hover { color: var(--gold-light); text-decoration: underline; text-underline-offset: 3px; }
+/* Entries whose ID contains an en dash are visible but marked as unresolved. */
+.catalogue-table tbody tr.unresolved-id td { color: var(--muted); }
+.catalogue-table tbody tr.unresolved-id .id-cell { color: var(--muted); }
+.catalogue-table tbody tr.unresolved-id .title-button { color: var(--muted); }
+.catalogue-table tbody tr.unresolved-id .title-button:hover { color: var(--muted); }
+.catalogue-table tbody tr.unresolved-id:hover { background: rgba(255,255,255,.025); }
 .title-main { display: block; font-weight: 400; }
 .title-subtitle { display: block; font-family: "Calibri Light", "Segoe UI Light", Calibri, "Segoe UI", Arial, sans-serif; font-weight: 200; }
 .detail-title .title-subtitle { margin-top: .12em; }

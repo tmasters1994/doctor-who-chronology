@@ -35,8 +35,8 @@ function parseCSV(text) {
 }
 function isExcluded(row) {
   const id = field(row, 'ID').toUpperCase();
-  // Keep unresolved IDs in the Sheet, but don't import them into the visible app catalogue.
-  return id.includes('TBD') || id.includes('–') || id.includes('—') || id === '-';
+  // Keep TBD and other placeholder IDs excluded. En-dash IDs are visible but styled as unresolved.
+  return id.includes('TBD') || id.includes('—') || id === '-';
 }
 // Supports both the original flat sheet and the new editing layout, where GROUP
 // and ERA are dedicated heading rows and subsequent catalogue records leave them blank.
@@ -143,7 +143,7 @@ function renderCatalogue() {
             <thead><tr>${state.compactView
               ? '<th scope="col">ID</th><th scope="col">Title</th>'
               : '<th scope="col">ID</th><th scope="col">Title</th><th scope="col">Range</th><th scope="col">Release</th><th scope="col">Library</th><th scope="col">Release date</th>'}</tr></thead>
-            <tbody>${era.rows.map(row => `<tr>
+            <tbody>${era.rows.map(row => `<tr class="${field(row, 'ID').includes('–') ? 'unresolved-id' : ''}">
               <td class="id-cell">${escapeHtml(field(row, 'ID') || '—')}</td>
               <td><button type="button" class="title-button" data-record-id="${escapeHtml(field(row, 'ID'))}">${formatTitle(field(row, 'TITLE') || 'Untitled')}</button></td>
               ${state.compactView ? '' : `<td>${field(row, 'RANGE') ? `<span class="tag">${escapeHtml(field(row, 'RANGE'))}</span>` : '—'}</td>
