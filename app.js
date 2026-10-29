@@ -3,7 +3,7 @@
 const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRHeYBfAFZj_bhEH4ncnGPwccoF8JaAxsRYzuaeJguThQXLWldk87ewRZhrwm5eH5yZs_iKCdBx3pEf/pub?output=csv';
 const CACHE_KEY = 'dw-chronology-csv-v5';
 const $ = (id) => document.getElementById(id);
-const state = { rows: [], headers: [], selected: null, loading: false };
+const state = { rows: [], headers: [], selected: null, loading: false, compactView: localStorage.getItem('dw-chronology-compact-view') === 'true' };
 
 function normalizeHeader(value) { return String(value ?? '').replace(/^\uFEFF/, '').trim().toUpperCase(); }
 function field(row, name) {
@@ -93,17 +93,22 @@ function renderCatalogue() {
       ${group.eras.map(era => `
         <div class="era-block">
           <div class="era-heading"><span>${escapeHtml(era.name)}</span><span class="era-count">${era.rows.length} item${era.rows.length === 1 ? '' : 's'}</span></div>
-          <div class="table-wrap"><table>
-            <colgroup><col style="width:8%"><col style="width:22%"><col style="width:13%"><col style="width:15%"><col style="width:13%"><col style="width:13%"><col style="width:16%"></colgroup>
-            <thead><tr><th scope="col">ID</th><th scope="col">Title</th><th scope="col">Doctor</th><th scope="col">Range</th><th scope="col">Release</th><th scope="col">Library</th><th scope="col">Release date</th></tr></thead>
+          <div class="table-wrap"><table class="catalogue-table${state.compactView ? ' compact-table' : ''}">
+            ${state.compactView
+              ? '<colgroup><col style="width:22%"><col style="width:22%"><col style="width:10%"><col style="width:46%"></colgroup>'
+              : '<colgroup><col style="width:8%"><col style="width:22%"><col style="width:13%"><col style="width:15%"><col style="width:13%"><col style="width:13%"><col style="width:16%"></colgroup>'}
+            <thead><tr>${state.compactView
+              ? '<th scope="col">Group</th><th scope="col">Era</th><th scope="col">ID</th><th scope="col">Title</th>'
+              : '<th scope="col">ID</th><th scope="col">Title</th><th scope="col">Doctor</th><th scope="col">Range</th><th scope="col">Release</th><th scope="col">Library</th><th scope="col">Release date</th>'}</tr></thead>
             <tbody>${era.rows.map(row => `<tr>
+              ${state.compactView ? `<td>${escapeHtml(field(row, 'GROUP') || '—')}</td><td>${escapeHtml(field(row, 'ERA') || '—')}</td>` : ''}
               <td class="id-cell">${escapeHtml(field(row, 'ID') || '—')}</td>
               <td><button type="button" class="title-button" data-record-id="${escapeHtml(field(row, 'ID'))}">${formatTitle(field(row, 'TITLE') || 'Untitled')}</button></td>
-              <td>${escapeHtml(field(row, 'DOCTOR') || '—')}</td>
+              ${state.compactView ? '' : `<td>${escapeHtml(field(row, 'DOCTOR') || '—')}</td>
               <td>${field(row, 'RANGE') ? `<span class="tag">${escapeHtml(field(row, 'RANGE'))}</span>` : '—'}</td>
               <td>${escapeHtml(field(row, 'RELEASE') || '—')}</td>
               <td>${escapeHtml(field(row, 'LIBRARY') || '—')}</td>
-              <td>${escapeHtml(field(row, 'RELEASE DATE') || '—')}</td>
+              <td>${escapeHtml(field(row, 'RELEASE DATE') || '—')}</td>`}
             </tr>`).join('')}</tbody>
           </table></div>
         </div>`).join('')}
@@ -187,6 +192,12 @@ async function loadCatalogue({ manual = false } = {}) {
   }
 }
 ['searchInput', 'groupFilter', 'eraFilter', 'rangeFilter', 'doctorFilter', 'libraryFilter'].forEach(id => $(id).addEventListener(id === 'searchInput' ? 'input' : 'change', renderCatalogue));
+$('compactViewToggle').checked = state.compactView;
+$('compactViewToggle').addEventListener('change', () => {
+  state.compactView = $('compactViewToggle').checked;
+  localStorage.setItem('dw-chronology-compact-view', String(state.compactView));
+  renderCatalogue();
+});
 $('detailPanel').addEventListener('close', () => { state.selected = null; });
 $('detailPanel').addEventListener('click', event => { if (event.target === $('detailPanel')) $('detailPanel').close(); });
 $('refreshButton').addEventListener('click', () => loadCatalogue({ manual: true }));

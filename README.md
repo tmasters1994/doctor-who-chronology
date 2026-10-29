@@ -26,3 +26,8 @@ The app recognises these headers (case-insensitive): `ID`, `TITLE`, `GROUP`, `ER
 - Titles containing a colon automatically display the text before the first colon in bold, with the text after it on a new line in regular weight.
 - Manual refresh and cached fallback when the network is unavailable.
 - Dark-blue archive theme and Calibri-style sans-serif typography.
+
+
+## Compact view (v10)
+
+Use the **Compact view** checkbox above the catalogue to switch between the full table and a four-column view showing Group, Era, ID, and Title. The selection is remembered in this browser.
