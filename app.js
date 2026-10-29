@@ -95,13 +95,12 @@ function renderCatalogue() {
           <div class="era-heading"><span>${escapeHtml(era.name)}</span><span class="era-count">${era.rows.length} item${era.rows.length === 1 ? '' : 's'}</span></div>
           <div class="table-wrap"><table class="catalogue-table${state.compactView ? ' compact-table' : ''}">
             ${state.compactView
-              ? '<colgroup><col style="width:22%"><col style="width:22%"><col style="width:10%"><col style="width:46%"></colgroup>'
+              ? '<colgroup><col style="width:18%"><col style="width:82%"></colgroup>'
               : '<colgroup><col style="width:8%"><col style="width:22%"><col style="width:13%"><col style="width:15%"><col style="width:13%"><col style="width:13%"><col style="width:16%"></colgroup>'}
             <thead><tr>${state.compactView
-              ? '<th scope="col">Group</th><th scope="col">Era</th><th scope="col">ID</th><th scope="col">Title</th>'
+              ? '<th scope="col">ID</th><th scope="col">Title</th>'
               : '<th scope="col">ID</th><th scope="col">Title</th><th scope="col">Doctor</th><th scope="col">Range</th><th scope="col">Release</th><th scope="col">Library</th><th scope="col">Release date</th>'}</tr></thead>
             <tbody>${era.rows.map(row => `<tr>
-              ${state.compactView ? `<td>${escapeHtml(field(row, 'GROUP') || '—')}</td><td>${escapeHtml(field(row, 'ERA') || '—')}</td>` : ''}
               <td class="id-cell">${escapeHtml(field(row, 'ID') || '—')}</td>
               <td><button type="button" class="title-button" data-record-id="${escapeHtml(field(row, 'ID'))}">${formatTitle(field(row, 'TITLE') || 'Untitled')}</button></td>
               ${state.compactView ? '' : `<td>${escapeHtml(field(row, 'DOCTOR') || '—')}</td>

@@ -28,6 +28,6 @@ The app recognises these headers (case-insensitive): `ID`, `TITLE`, `GROUP`, `ER
 - Dark-blue archive theme and Calibri-style sans-serif typography.
 
 
-## Compact view (v10)
+## Compact view (v11)
 
-Use the **Compact view** checkbox above the catalogue to switch between the full table and a four-column view showing Group, Era, ID, and Title. The selection is remembered in this browser.
+Use the **Compact view** checkbox above the catalogue to switch between the full table and a two-column view showing ID and Title. Group and Era remain as section headings separating the tables; they are not repeated as columns. The selection is remembered in this browser.

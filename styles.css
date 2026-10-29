@@ -36,8 +36,9 @@ input::placeholder { color: #74839b; }
 .status-line p { margin: 0; }
 .compact-toggle { display: inline-flex; align-items: center; gap: 8px; margin-left: auto; color: var(--muted); cursor: pointer; white-space: nowrap; font-size: .84rem; }
 .compact-toggle input { width: 16px; min-height: 16px; height: 16px; margin: 0; accent-color: var(--gold); cursor: pointer; }
-.compact-table td:not(:nth-child(4)) { white-space: nowrap; overflow-wrap: normal; }
-.compact-table td:nth-child(4) { white-space: normal; }
+.compact-table { min-width: 0; width: 100%; }
+.compact-table th:first-child, .compact-table td:first-child { white-space: nowrap; overflow-wrap: normal; }
+.compact-table th:nth-child(2), .compact-table td:nth-child(2) { white-space: normal; }
 .catalogue { display: flex; flex-direction: column; gap: 22px; }
 .group-section { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: var(--panel-soft); }
 .group-heading { padding: 16px 18px 13px; background: var(--panel); border-bottom: 1px solid var(--line); }
