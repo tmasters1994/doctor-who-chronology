@@ -88,13 +88,16 @@ function render() {
     empty.textContent = rows.length ? "No records match these filters." : "No records found in the published sheet.";
     container.appendChild(empty); return;
   }
+  const idCol = columns.find(c => c.trim().toUpperCase() === "ID");
   list.forEach((record, index) => {
     const button = document.createElement("button");
     button.type = "button"; button.className = "record";
     const title = val(record[titleCol]) || "(Untitled record)";
     const subtitle = subCol ? val(record[subCol]) : "";
     const category = [record.GROUP, record.RANGE].filter(Boolean).join(" · ");
-    button.innerHTML = `<span class="record-index">${String(index + 1).padStart(2,"0")}</span><span><span class="record-title">${esc(title)}</span>${subtitle && subtitle !== title ? `<span class="record-subtitle">${esc(subtitle)}</span>` : ""}</span><span class="record-category">${esc(category)}</span><span class="record-arrow" aria-hidden="true">↗</span>`;
+    // Show the catalogue's ID code at the far left instead of a generated row number.
+    const leftLabel = idCol && val(record[idCol]) ? val(record[idCol]) : String(index + 1).padStart(2, "0");
+    button.innerHTML = `<span class="record-index">${esc(leftLabel)}</span><span><span class="record-title">${esc(title)}</span>${subtitle && subtitle !== title ? `<span class="record-subtitle">${esc(subtitle)}</span>` : ""}</span><span class="record-category">${esc(category)}</span><span class="record-arrow" aria-hidden="true">↗</span>`;
     button.addEventListener("click", () => showDetails(record, titleCol));
     container.appendChild(button);
   });
