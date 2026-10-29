@@ -38,6 +38,49 @@ function isExcluded(row) {
   // Keep unresolved IDs in the Sheet, but don't import them into the visible app catalogue.
   return id.includes('TBD') || id.includes('–') || id.includes('—') || id === '-';
 }
+// Supports both the original flat sheet and the new editing layout, where GROUP
+// and ERA are dedicated heading rows and subsequent catalogue records leave them blank.
+function normalizeCatalogueRows(records) {
+  let currentGroup = '';
+  let currentEra = '';
+  const output = [];
+  for (const source of records) {
+    const row = { ...source };
+    const group = field(row, 'GROUP');
+    const era = field(row, 'ERA');
+    const id = field(row, 'ID');
+    const title = field(row, 'TITLE');
+
+    // A heading row has a group or era value but no catalogue ID or title.
+    if (!id && !title && group) {
+      // A GROUP heading only starts a new group when its name actually changes.
+      // Repeated headings with the same name are treated as redundant and do not
+      // reset the active ERA or create another group section in the app.
+      if (group !== currentGroup) {
+        currentGroup = group;
+        currentEra = '';
+      }
+      continue;
+    }
+    if (!id && !title && era) {
+      currentEra = era;
+      continue;
+    }
+    // Ignore fully empty/non-catalogue rows.
+    if (!id && !title) continue;
+
+    // Flat-layout rows may still specify these values directly; update context
+    // from them, then fill only missing values on data rows.
+    if (group) currentGroup = group;
+    if (era) currentEra = era;
+    const groupKey = Object.keys(row).find(k => normalizeHeader(k) === 'GROUP') || 'GROUP';
+    const eraKey = Object.keys(row).find(k => normalizeHeader(k) === 'ERA') || 'ERA';
+    if (!group) row[groupKey] = currentGroup;
+    if (!era) row[eraKey] = currentEra;
+    output.push(row);
+  }
+  return output;
+}
 function naturalCompare(a, b) { return String(a).localeCompare(String(b), undefined, { numeric: true, sensitivity: 'base' }); }
 function uniqueValues(rows, name) {
   return [...new Set(rows.map(r => field(r, name)).filter(Boolean))].sort(naturalCompare);
@@ -67,7 +110,7 @@ function filteredRows() {
       if (!haystack.includes(q)) return false;
     }
     return true;
-  }).sort((a, b) => naturalCompare(field(a, 'ID'), field(b, 'ID')));
+  });
 }
 function renderCatalogue() {
   const rows = filteredRows();
@@ -234,7 +277,7 @@ async function loadCatalogue({ manual = false } = {}) {
     const parsed = parseCSV(text);
     if (!parsed.records.length || !parsed.headers.length) throw new Error('The CSV appears to be empty.');
     state.headers = parsed.headers;
-    state.rows = parsed.records.filter(row => !isExcluded(row));
+    state.rows = normalizeCatalogueRows(parsed.records).filter(row => !isExcluded(row));
     localStorage.setItem(CACHE_KEY, text);
     populateFilters();
     renderCatalogue();
@@ -249,7 +292,7 @@ async function loadCatalogue({ manual = false } = {}) {
     if (cached) {
       const parsed = parseCSV(cached);
       state.headers = parsed.headers;
-      state.rows = parsed.records.filter(row => !isExcluded(row));
+      state.rows = normalizeCatalogueRows(parsed.records).filter(row => !isExcluded(row));
       populateFilters(); renderCatalogue();
       $('statusText').textContent = `Offline copy · Could not refresh from Google Sheets (${error.message})`;
     } else {
