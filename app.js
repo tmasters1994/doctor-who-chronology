@@ -132,21 +132,94 @@ function safeImageUrl(raw) {
   try { const url = new URL(value); return ['http:', 'https:'].includes(url.protocol) ? url.href : ''; }
   catch { return ''; }
 }
+function resetDetailPalette() {
+  const panel = $('detailPanel');
+  panel.style.setProperty('--detail-bg', '#12213d');
+  panel.style.setProperty('--detail-surface', '#172846');
+  panel.style.setProperty('--detail-border', '#2a3b59');
+}
+function rgbToHsl(r, g, b) {
+  r /= 255; g /= 255; b /= 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  const delta = max - min;
+  let h = 0, s = 0;
+  const l = (max + min) / 2;
+  if (delta !== 0) {
+    s = delta / (1 - Math.abs(2 * l - 1));
+    if (max === r) h = 60 * (((g - b) / delta) % 6);
+    else if (max === g) h = 60 * ((b - r) / delta + 2);
+    else h = 60 * ((r - g) / delta + 4);
+  }
+  return { h: (h + 360) % 360, s: s * 100, l: l * 100 };
+}
+function applyCoverPalette(image) {
+  try {
+    const canvas = document.createElement('canvas');
+    const size = 36;
+    canvas.width = size; canvas.height = size;
+    const context = canvas.getContext('2d', { willReadFrequently: true });
+    if (!context) return;
+    context.drawImage(image, 0, 0, size, size);
+    const pixels = context.getImageData(0, 0, size, size).data;
+    const hueBins = Array.from({ length: 12 }, () => ({ count: 0, h: 0, s: 0 }));
+    let greyCount = 0, greyL = 0;
+    for (let i = 0; i < pixels.length; i += 4) {
+      if (pixels[i + 3] < 180) continue;
+      const color = rgbToHsl(pixels[i], pixels[i + 1], pixels[i + 2]);
+      // Ignore near-black and near-white pixels when selecting the cover's accent hue.
+      if (color.l > 7 && color.l < 91 && color.s >= 13) {
+        const index = Math.floor(color.h / 30) % 12;
+        hueBins[index].count++;
+        hueBins[index].h += color.h;
+        hueBins[index].s += color.s;
+      } else {
+        greyCount++;
+        greyL += color.l;
+      }
+    }
+    const dominant = hueBins.reduce((best, bin) => bin.count > best.count ? bin : best, { count: 0, h: 0, s: 0 });
+    let hue = dominant.count ? dominant.h / dominant.count : 215;
+    // Keep a hint of the artwork's hue, but deliberately keep the modal dark and readable.
+    let saturation = dominant.count ? Math.max(22, Math.min(48, dominant.s / dominant.count * 0.8)) : 28;
+    if (dominant.count < 8 && greyCount > size * size * 0.65) { hue = 215; saturation = 28; }
+    const panel = $('detailPanel');
+    panel.style.setProperty('--detail-bg', `hsl(${Math.round(hue)} ${Math.round(saturation)}% 9%)`);
+    panel.style.setProperty('--detail-surface', `hsl(${Math.round(hue)} ${Math.round(saturation)}% 13%)`);
+    panel.style.setProperty('--detail-border', `hsl(${Math.round(hue)} ${Math.round(Math.min(42, saturation + 4))}% 25%)`);
+  } catch (_) {
+    // Canvas sampling can be blocked by cross-origin image hosts. Keep the default navy palette.
+  }
+}
+function sampleCoverPalette(url) {
+  if (!url) return;
+  // Use a separate CORS-enabled image for sampling so a host that blocks canvas access
+  // cannot prevent the regular cover image from displaying in the modal.
+  const sampler = new Image();
+  sampler.crossOrigin = 'anonymous';
+  sampler.onload = () => applyCoverPalette(sampler);
+  sampler.onerror = () => {}; // Graceful fallback: the modal remains navy.
+  sampler.src = url;
+}
 function showDetail(row) {
   state.selected = row;
-  const details = ['DOCTOR', 'GROUP', 'ERA', 'RANGE', 'RELEASE', 'RELEASE DATE', 'LIBRARY'];
+  resetDetailPalette();
+  const details = ['DOCTOR', 'ID', 'GROUP', 'ERA', 'RANGE', 'RELEASE', 'RELEASE DATE', 'LIBRARY'];
   const cover = safeImageUrl(field(row, 'COVER ART')) || safeImageUrl(field(row, 'COVERART')) || safeImageUrl(field(row, 'COVER'));
   const meta = details.map(name => `<div class="meta-item"><dt>${escapeHtml(name === 'RELEASE DATE' ? 'Release date' : name[0] + name.slice(1).toLowerCase())}</dt><dd>${escapeHtml(field(row, name) || '—')}</dd></div>`).join('');
   const synopsis = field(row, 'SYNOPSIS');
   const synopsisContent = synopsis ? escapeHtml(synopsis).replace(/\r?\n/g, '<br>') : '<span class="synopsis-empty">No synopsis supplied yet. Add text to the <strong>SYNOPSIS</strong> column in your Google Sheet.</span>';
   $('detailPanel').innerHTML = `
-    <div class="detail-top"><div><p class="detail-kicker">Catalogue entry</p><h2 id="detailTitle" class="detail-title">${formatTitle(field(row, 'TITLE') || 'Untitled')}</h2><p class="detail-id">Chronology ID: ${escapeHtml(field(row, 'ID') || '—')}</p></div><button id="closeDetail" class="button button-secondary" type="button">Close details ✕</button></div>
-    <div class="detail-layout"><dl class="detail-meta">${meta}</dl><figure class="cover-art">${cover ? `<img src="${escapeHtml(cover)}" alt="Cover art for ${escapeHtml(field(row, 'TITLE') || 'this item')}" loading="lazy"><figcaption>Cover art</figcaption>` : `<div class="cover-placeholder">No cover art supplied yet.<br><span>Add a direct image URL in the <strong>COVER ART</strong> column.</span></div>`}</figure></div>
-    <section class="synopsis-section" aria-labelledby="synopsisHeading"><h3 id="synopsisHeading">Synopsis</h3><p class="synopsis-text">${synopsisContent}</p></section>`;
+    <div class="detail-top"><p class="detail-kicker">Doctor Who · Catalogue entry</p><button id="closeDetail" class="button button-secondary" type="button" aria-label="Close details">Close details ✕</button></div>
+    <figure class="cover-art detail-cover">${cover ? `<img src="${escapeHtml(cover)}" alt="Cover art for ${escapeHtml(field(row, 'TITLE') || 'this item')}" loading="eager"><figcaption>Cover art</figcaption>` : `<div class="cover-placeholder">No cover art supplied yet.<br><span>Add a direct image URL in the <strong>COVER ART</strong> column.</span></div>`}</figure>
+    <header class="detail-heading"><h2 id="detailTitle" class="detail-title">${formatTitle(field(row, 'TITLE') || 'Untitled')}</h2></header>
+    <section class="synopsis-section" aria-labelledby="synopsisHeading"><h3 id="synopsisHeading">Synopsis</h3><p class="synopsis-text">${synopsisContent}</p></section>
+    <div class="detail-divider" role="separator" aria-hidden="true"></div>
+    <section class="story-details" aria-labelledby="storyDetailsHeading"><h3 id="storyDetailsHeading">Story details</h3><dl class="detail-meta">${meta}</dl></section>`;
   if (!$('detailPanel').open) $('detailPanel').showModal();
   $('closeDetail').addEventListener('click', () => $('detailPanel').close());
   const img = $('detailPanel').querySelector('img');
   if (img) img.addEventListener('error', () => { const figure = img.closest('figure'); figure.innerHTML = '<div class="cover-placeholder detail-error">Cover art could not be loaded. Check that the URL points directly to a publicly accessible image.</div>'; }, { once: true });
+  sampleCoverPalette(cover);
 }
 async function loadCatalogue({ manual = false } = {}) {
   if (state.loading) return;
