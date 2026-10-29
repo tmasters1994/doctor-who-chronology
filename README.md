@@ -1,34 +1,27 @@
-# Doctor Who Chronology — PWA starter
+# Doctor Who Chronology PWA
 
-This is a static progressive web app tailored to the provided Doctor Who catalogue CSV. It reads the published Google Sheets feed directly and provides search, sorting, filters for GROUP/ERA/RANGE/LIBRARY, and record detail views.
+A static progressive web app for a personal Doctor Who chronology catalogue. It reads the published CSV from Google Sheets, so the spreadsheet remains the source of truth.
 
-## Files
-- `index.html` — app structure
-- `styles.css` — responsive editorial styling
-- `app.js` — CSV fetching, parsing, search, sorting, filters and record details
-- `manifest.webmanifest` — installable-app metadata
-- `sw.js` — caches the app shell for offline loading
-- `icon.svg` — starter app icon
+## Deploy or update on GitHub Pages
 
-## Deploy on GitHub Pages
-1. Create a new GitHub repository.
-2. Upload all files from this folder to the repository root.
-3. In repository Settings → Pages, select Deploy from a branch, choose `main` and `/ (root)`, then save.
-4. Wait for deployment, then open the provided Pages URL over HTTPS.
-5. Install from the browser: on iPhone/iPad use Share → Add to Home Screen; in supported desktop browsers use the install icon/menu.
+1. Download and unzip this package.
+2. In your existing GitHub repository, upload/replace the files at the repository root: `index.html`, `styles.css`, `app.js`, `sw.js`, `manifest.webmanifest`, `icon.svg`, and `README.md`.
+3. Commit the changes. GitHub Pages should rebuild the site automatically.
+4. Reload the site. If an older version remains cached, do a hard refresh or close and reopen the installed PWA.
 
-## Data
-The CSV feed is configured in `app.js`. The app tries to fetch it when it loads and when Refresh is clicked. If fetching fails after a successful load, it shows the last saved CSV copy from that browser.
+## Google Sheet columns
 
-The published feed is public. Do not put private data in the published worksheet.
+The app recognises these headers (case-insensitive): `ID`, `TITLE`, `GROUP`, `ERA`, `RANGE`, `RELEASE`, `LIBRARY`, `RELEASE DATE`, `DOCTOR`, and `COVER ART`.
 
-## Customising
-- Edit the page title and introductory copy in `index.html`.
-- Change colours and typography in `styles.css` under `:root`.
-- The app is tailored to `GROUP`, `ERA`, `ID`, `TITLE`, `RANGE`, `RELEASE`, `LIBRARY`, and `RELEASE DATE`. Rows whose `ID` contains `TBD` remain in Google Sheets but are excluded from the app until assigned a definitive ID.
-- The starter icon is `icon.svg`.
+- Add `DOCTOR` for the Doctor associated with an entry.
+- Add `COVER ART` with a direct, publicly accessible `https://` image URL. Cover art appears only in the entry details panel, not in the chronology table.
+- Column order does not matter; the app reads values by header name.
+- Entries whose `ID` contains `TBD`, an en dash (`–`) or em dash (`—`), or whose ID is just a hyphen (`-`), are retained in the spreadsheet but excluded from the visible catalogue.
 
-## Notes
-- A service worker requires HTTPS or localhost; GitHub Pages supplies HTTPS.
-- The service worker caches the app shell. The last successfully loaded CSV is cached in localStorage by the app.
-- External CSV updates depend on Google's published-feed propagation and network availability.
+## Features
+
+- Search and filters for Group, Era, Range, Doctor, and Library.
+- Chronology grouped by Group and Era, with natural alphanumeric ID ordering.
+- Details panel with metadata and optional cover art.
+- Manual refresh and cached fallback when the network is unavailable.
+- Dark-blue archive theme and Calibri-style sans-serif typography.

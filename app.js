@@ -1,165 +1,181 @@
-const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRHeYBfAFZj_bhEH4ncnGPwccoF8JaAxsRYzuaeJguThQXLWldk87ewRZhrwm5eH5yZs_iKCdBx3pEf/pub?output=csv";
-const CACHE_KEY = "doctor-who-chronology-csv-v2";
-const $ = id => document.getElementById(id);
-let rows = [], columns = [];
-const filterIds = { GROUP: "groupFilter", ERA: "eraFilter", RANGE: "rangeFilter", LIBRARY: "libraryFilter" };
+'use strict';
 
+const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRHeYBfAFZj_bhEH4ncnGPwccoF8JaAxsRYzuaeJguThQXLWldk87ewRZhrwm5eH5yZs_iKCdBx3pEf/pub?output=csv';
+const CACHE_KEY = 'dw-chronology-csv-v4';
+const $ = (id) => document.getElementById(id);
+const state = { rows: [], headers: [], selected: null, loading: false };
+
+function normalizeHeader(value) { return String(value ?? '').replace(/^\uFEFF/, '').trim().toUpperCase(); }
+function field(row, name) {
+  const key = Object.keys(row).find(k => normalizeHeader(k) === normalizeHeader(name));
+  return key ? String(row[key] ?? '').trim() : '';
+}
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
 function parseCSV(text) {
-  const out = []; let row = [], cell = "", quoted = false;
+  const rows = []; let row = []; let cell = ''; let quoted = false;
+  text = text.replace(/^\uFEFF/, '');
   for (let i = 0; i < text.length; i++) {
-    const c = text[i];
+    const ch = text[i], next = text[i + 1];
     if (quoted) {
-      if (c === '"' && text[i + 1] === '"') { cell += '"'; i++; }
-      else if (c === '"') quoted = false;
-      else cell += c;
-    } else if (c === '"' && cell.length === 0) quoted = true;
-    else if (c === ",") { row.push(cell); cell = ""; }
-    else if (c === "\n") { row.push(cell.replace(/\r$/, "")); out.push(row); row = []; cell = ""; }
-    else cell += c;
+      if (ch === '"' && next === '"') { cell += '"'; i++; }
+      else if (ch === '"') quoted = false;
+      else cell += ch;
+    } else if (ch === '"') quoted = true;
+    else if (ch === ',') { row.push(cell); cell = ''; }
+    else if (ch === '\n') { row.push(cell.replace(/\r$/, '')); if (row.some(v => v.trim())) rows.push(row); row = []; cell = ''; }
+    else cell += ch;
   }
-  if (cell.length || row.length) { row.push(cell.replace(/\r$/, "")); out.push(row); }
-  while (out.length && out[out.length - 1].every(v => !String(v).trim())) out.pop();
-  if (!out.length) return { columns: [], rows: [] };
-  const headers = out.shift().map((h, i) => h.trim() || `Column ${i + 1}`);
-  const data = out.filter(r => r.some(v => String(v).trim())).map((r, index) => {
-    const obj = { __index: index };
-    headers.forEach((h, i) => obj[h] = (r[i] ?? "").trim());
-    return obj;
-  });
-  return { columns: headers, rows: data };
+  if (cell.length || row.length) { row.push(cell.replace(/\r$/, '')); if (row.some(v => v.trim())) rows.push(row); }
+  if (!rows.length) return { headers: [], records: [] };
+  const headers = rows.shift().map(h => h.trim());
+  const records = rows.map(values => Object.fromEntries(headers.map((h, i) => [h, (values[i] ?? '').trim()])));
+  return { headers, records };
 }
-const val = x => String(x ?? "");
-const esc = x => val(x).replace(/[&<>"']/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
-function titleColumn() {
-  return columns.find(c => /^TITLE$/i.test(c)) ||
-    columns.find(c => /title|name|story|episode|item|serial|entry/i.test(c)) || columns[0];
+function isExcluded(row) {
+  const id = field(row, 'ID').toUpperCase();
+  // Keep unresolved IDs in the Sheet, but don't import them into the visible app catalogue.
+  return id.includes('TBD') || id.includes('–') || id.includes('—') || id === '-';
 }
-function visibleRows() {
-  const query = $("searchInput").value.trim().toLocaleLowerCase();
-  return rows.filter(r => {
-    const textMatch = !query || columns.some(c => val(r[c]).toLocaleLowerCase().includes(query));
-    const filterMatch = Object.entries(filterIds).every(([col, id]) => {
-      const selected = $(id).value;
-      return !selected || val(r[col]) === selected;
-    });
-    return textMatch && filterMatch;
-  }).sort((a,b) => {
-    const key = $("sortSelect").value;
-    if (key === "default") return a.__index - b.__index;
-    return val(a[key]).localeCompare(val(b[key]), undefined, {numeric:true, sensitivity:"base"});
-  });
+function naturalCompare(a, b) { return String(a).localeCompare(String(b), undefined, { numeric: true, sensitivity: 'base' }); }
+function uniqueValues(rows, name) {
+  return [...new Set(rows.map(r => field(r, name)).filter(Boolean))].sort(naturalCompare);
+}
+function setOptions(select, values, defaultLabel) {
+  const previous = select.value;
+  select.innerHTML = `<option value="">${escapeHtml(defaultLabel)}</option>` + values.map(v => `<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join('');
+  if (values.includes(previous)) select.value = previous;
 }
 function populateFilters() {
-  for (const [column, id] of Object.entries(filterIds)) {
-    const select = $(id);
-    const previous = select.value;
-    const firstLabel = ({GROUP:"All groups", ERA:"All eras", RANGE:"All ranges", LIBRARY:"All records"})[column];
-    select.replaceChildren(new Option(firstLabel, ""));
-    if (!columns.includes(column)) {
-      select.disabled = true;
-      continue;
+  setOptions($('groupFilter'), uniqueValues(state.rows, 'GROUP'), 'All groups');
+  setOptions($('eraFilter'), uniqueValues(state.rows, 'ERA'), 'All eras');
+  setOptions($('rangeFilter'), uniqueValues(state.rows, 'RANGE'), 'All ranges');
+  setOptions($('doctorFilter'), uniqueValues(state.rows, 'DOCTOR'), 'All Doctors');
+  setOptions($('libraryFilter'), uniqueValues(state.rows, 'LIBRARY'), 'All items');
+}
+function filteredRows() {
+  const q = $('searchInput').value.trim().toLocaleLowerCase();
+  return state.rows.filter(row => {
+    if ($('groupFilter').value && field(row, 'GROUP') !== $('groupFilter').value) return false;
+    if ($('eraFilter').value && field(row, 'ERA') !== $('eraFilter').value) return false;
+    if ($('rangeFilter').value && field(row, 'RANGE') !== $('rangeFilter').value) return false;
+    if ($('doctorFilter').value && field(row, 'DOCTOR') !== $('doctorFilter').value) return false;
+    if ($('libraryFilter').value && field(row, 'LIBRARY') !== $('libraryFilter').value) return false;
+    if (q) {
+      const haystack = [field(row, 'ID'), field(row, 'TITLE'), field(row, 'GROUP'), field(row, 'ERA'), field(row, 'RANGE'), field(row, 'RELEASE'), field(row, 'LIBRARY'), field(row, 'RELEASE DATE'), field(row, 'DOCTOR')].join(' ').toLocaleLowerCase();
+      if (!haystack.includes(q)) return false;
     }
-    select.disabled = false;
-    [...new Set(rows.map(r => val(r[column])).filter(Boolean))]
-      .sort((a,b) => a.localeCompare(b, undefined, {numeric:true, sensitivity:"base"}))
-      .forEach(value => select.add(new Option(value, value)));
-    if ([...select.options].some(o => o.value === previous)) select.value = previous;
+    return true;
+  }).sort((a, b) => naturalCompare(field(a, 'ID'), field(b, 'ID')));
+}
+function renderCatalogue() {
+  const rows = filteredRows();
+  $('countText').textContent = `${rows.length.toLocaleString()} item${rows.length === 1 ? '' : 's'}`;
+  if (!rows.length) {
+    $('catalogue').innerHTML = '<div class="empty-state">No catalogue entries match those filters.</div>';
+    return;
   }
-}
-function populateSort() {
-  const select = $("sortSelect"), previous = select.value;
-  select.replaceChildren(new Option("Sheet order", "default"));
-  columns.forEach(col => select.add(new Option(col, col)));
-  if ([...select.options].some(o => o.value === previous)) select.value = previous;
-}
-function setStatus(message, error = false) {
-  $("status").textContent = message;
-  $("status").classList.toggle("error", error);
-}
-function render() {
-  const list = visibleRows(), titleCol = titleColumn();
-  const subCol = columns.find(c => c === "ERA") || columns.find(c => c === "GROUP") || columns.find(c => c !== titleCol);
-  $("recordCount").textContent = `${rows.length.toLocaleString()} RECORDS`;
-  $("resultSummary").textContent = `${list.length} SHOWN`;
-  const container = $("records"); container.replaceChildren();
-  if (!list.length) {
-    const empty = document.createElement("div");
-    empty.className = "empty-state";
-    empty.textContent = rows.length ? "No records match these filters." : "No records found in the published sheet.";
-    container.appendChild(empty); return;
+  // Preserve the archive's Group > Era hierarchy while sorting each section by ID.
+  const groups = [];
+  const groupMap = new Map();
+  for (const row of rows) {
+    const groupName = field(row, 'GROUP') || 'Uncategorised';
+    if (!groupMap.has(groupName)) { const g = { name: groupName, eras: [], eraMap: new Map() }; groupMap.set(groupName, g); groups.push(g); }
+    const g = groupMap.get(groupName);
+    const eraName = field(row, 'ERA') || 'Unspecified era';
+    if (!g.eraMap.has(eraName)) { const e = { name: eraName, rows: [] }; g.eraMap.set(eraName, e); g.eras.push(e); }
+    g.eraMap.get(eraName).rows.push(row);
   }
-  const idCol = columns.find(c => c.trim().toUpperCase() === "ID");
-  list.forEach((record, index) => {
-    const button = document.createElement("button");
-    button.type = "button"; button.className = "record";
-    const title = val(record[titleCol]) || "(Untitled record)";
-    const subtitle = subCol ? val(record[subCol]) : "";
-    const category = [record.GROUP, record.RANGE].filter(Boolean).join(" · ");
-    // Show the catalogue's ID code at the far left instead of a generated row number.
-    const leftLabel = idCol && val(record[idCol]) ? val(record[idCol]) : String(index + 1).padStart(2, "0");
-    button.innerHTML = `<span class="record-index">${esc(leftLabel)}</span><span><span class="record-title">${esc(title)}</span>${subtitle && subtitle !== title ? `<span class="record-subtitle">${esc(subtitle)}</span>` : ""}</span><span class="record-category">${esc(category)}</span><span class="record-arrow" aria-hidden="true">↗</span>`;
-    button.addEventListener("click", () => showDetails(record, titleCol));
-    container.appendChild(button);
-  });
+  $('catalogue').innerHTML = groups.map(group => `
+    <section class="group-section">
+      <div class="group-heading"><p class="eyebrow">CHRONOLOGY GROUP</p><h2>${escapeHtml(group.name)}</h2></div>
+      ${group.eras.map(era => `
+        <div class="era-block">
+          <div class="era-heading"><span>${escapeHtml(era.name)}</span><span class="era-count">${era.rows.length} item${era.rows.length === 1 ? '' : 's'}</span></div>
+          <div class="table-wrap"><table>
+            <thead><tr><th scope="col">ID</th><th scope="col">Title</th><th scope="col">Doctor</th><th scope="col">Range</th><th scope="col">Release</th><th scope="col">Library</th><th scope="col">Release date</th></tr></thead>
+            <tbody>${era.rows.map(row => `<tr>
+              <td class="id-cell">${escapeHtml(field(row, 'ID') || '—')}</td>
+              <td><button type="button" class="title-button" data-record-id="${escapeHtml(field(row, 'ID'))}">${escapeHtml(field(row, 'TITLE') || 'Untitled')}</button></td>
+              <td>${escapeHtml(field(row, 'DOCTOR') || '—')}</td>
+              <td>${field(row, 'RANGE') ? `<span class="tag">${escapeHtml(field(row, 'RANGE'))}</span>` : '—'}</td>
+              <td>${escapeHtml(field(row, 'RELEASE') || '—')}</td>
+              <td>${escapeHtml(field(row, 'LIBRARY') || '—')}</td>
+              <td>${escapeHtml(field(row, 'RELEASE DATE') || '—')}</td>
+            </tr>`).join('')}</tbody>
+          </table></div>
+        </div>`).join('')}
+    </section>`).join('');
+  $('catalogue').querySelectorAll('[data-record-id]').forEach(button => button.addEventListener('click', () => {
+    const id = button.dataset.recordId;
+    const record = state.rows.find(r => field(r, 'ID') === id);
+    if (record) showDetail(record);
+  }));
 }
-function showDetails(record, titleCol) {
-  const content = $("detailContent"); content.replaceChildren();
-  const title = document.createElement("h2");
-  title.className = "detail-title"; title.textContent = val(record[titleCol]) || "(Untitled record)";
-  content.appendChild(title);
-  const dl = document.createElement("dl"); dl.className = "detail-fields";
-  columns.forEach(col => {
-    const value = val(record[col]); if (!value) return;
-    const wrap = document.createElement("div"); wrap.className = "detail-field";
-    const dt = document.createElement("dt"); dt.textContent = col;
-    const dd = document.createElement("dd"); dd.textContent = value;
-    wrap.append(dt, dd); dl.appendChild(wrap);
-  });
-  content.appendChild(dl);
-  const dialog = $("detailDialog");
-  if (typeof dialog.showModal === "function") dialog.showModal();
-  else dialog.setAttribute("open", "");
+function safeImageUrl(raw) {
+  const value = String(raw ?? '').trim();
+  if (!value) return '';
+  try { const url = new URL(value); return ['http:', 'https:'].includes(url.protocol) ? url.href : ''; }
+  catch { return ''; }
 }
-async function loadData() {
-  const btn = $("refreshBtn"); btn.disabled = true; btn.innerHTML = '<span aria-hidden="true">↻</span> Loading…';
-  setStatus("Loading chronology from Google Sheets…");
+function showDetail(row) {
+  state.selected = row;
+  const details = ['DOCTOR', 'GROUP', 'ERA', 'RANGE', 'RELEASE', 'RELEASE DATE', 'LIBRARY'];
+  const cover = safeImageUrl(field(row, 'COVER ART')) || safeImageUrl(field(row, 'COVERART')) || safeImageUrl(field(row, 'COVER'));
+  const meta = details.map(name => `<div class="meta-item"><dt>${escapeHtml(name === 'RELEASE DATE' ? 'Release date' : name[0] + name.slice(1).toLowerCase())}</dt><dd>${escapeHtml(field(row, name) || '—')}</dd></div>`).join('');
+  $('detailPanel').innerHTML = `
+    <div class="detail-top"><div><p class="detail-kicker">Catalogue entry</p><h2 class="detail-title">${escapeHtml(field(row, 'TITLE') || 'Untitled')}</h2><p class="detail-id">Chronology ID: ${escapeHtml(field(row, 'ID') || '—')}</p></div><button id="closeDetail" class="button button-secondary" type="button">Close details ✕</button></div>
+    <div class="detail-layout"><dl class="detail-meta">${meta}</dl><figure class="cover-art">${cover ? `<img src="${escapeHtml(cover)}" alt="Cover art for ${escapeHtml(field(row, 'TITLE') || 'this item')}" loading="lazy"><figcaption>Cover art</figcaption>` : `<div class="cover-placeholder">No cover art supplied yet.<br><span>Add a direct image URL in the <strong>COVER ART</strong> column.</span></div>`}</figure></div>`;
+  $('detailPanel').hidden = false;
+  $('closeDetail').addEventListener('click', () => { $('detailPanel').hidden = true; state.selected = null; });
+  const img = $('detailPanel').querySelector('img');
+  if (img) img.addEventListener('error', () => { const figure = img.closest('figure'); figure.innerHTML = '<div class="cover-placeholder detail-error">Cover art could not be loaded. Check that the URL points directly to a publicly accessible image.</div>'; }, { once: true });
+  $('detailPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+async function loadCatalogue({ manual = false } = {}) {
+  if (state.loading) return;
+  state.loading = true;
+  $('refreshButton').disabled = true;
+  $('refreshButton').textContent = 'Refreshing…';
+  $('statusText').textContent = 'Connecting to Google Sheets…';
   try {
-    const url = new URL(CSV_URL); url.searchParams.set("_refresh", String(Date.now()));
-    const response = await fetch(url, {cache:"no-store"});
-    if (!response.ok) throw new Error(`CSV feed returned ${response.status}`);
-    const csv = await response.text();
-    if (!csv.trim() || /<html|<!doctype/i.test(csv.slice(0,200))) throw new Error("The published URL did not return CSV.");
-    const parsed = parseCSV(csv);
-    if (!parsed.columns.length) throw new Error("No column headings found.");
-    columns = parsed.columns;
-    // Rows with TBD in the ID field are placeholders and remain in Sheets,
-    // but are not displayed in the app until they receive a definitive ID.
-    rows = parsed.rows.filter(r => !/TBD/i.test(val(r.ID)));
-    try { localStorage.setItem(CACHE_KEY, JSON.stringify({csv, fetchedAt:Date.now()})); } catch {}
-    populateFilters(); populateSort(); render();
-    $("updatedAt").textContent = `UPDATED ${new Date().toLocaleString([], {dateStyle:"medium", timeStyle:"short"})}`;
-    setStatus("");
-  } catch (error) {
-    let cached = null; try { cached = JSON.parse(localStorage.getItem(CACHE_KEY) || "null"); } catch {}
-    if (cached?.csv) {
-      const parsed = parseCSV(cached.csv); columns = parsed.columns;
-      rows = parsed.rows.filter(r => !/TBD/i.test(val(r.ID)));
-      populateFilters(); populateSort(); render();
-      $("updatedAt").textContent = `CACHED · ${new Date(cached.fetchedAt).toLocaleDateString()}`;
-      setStatus("Couldn't refresh. Showing the last saved catalogue copy.", true);
-    } else {
-      setStatus("Couldn't load the spreadsheet. Check that the CSV is published, then try Refresh.", true);
-      console.error(error);
+    const response = await fetch(`${CSV_URL}${CSV_URL.includes('?') ? '&' : '?'}_=${Date.now()}`, { cache: 'no-store' });
+    if (!response.ok) throw new Error(`Google Sheets returned HTTP ${response.status}`);
+    const text = await response.text();
+    if (!text.trim() || !text.includes(',')) throw new Error('The published sheet did not return a CSV file.');
+    const parsed = parseCSV(text);
+    if (!parsed.records.length || !parsed.headers.length) throw new Error('The CSV appears to be empty.');
+    state.headers = parsed.headers;
+    state.rows = parsed.records.filter(row => !isExcluded(row));
+    localStorage.setItem(CACHE_KEY, text);
+    populateFilters();
+    renderCatalogue();
+    $('statusText').textContent = `Connected to Google Sheets · Updated ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+    if (!$('detailPanel').hidden && state.selected) {
+      const selectedId = field(state.selected, 'ID');
+      const refreshed = state.rows.find(r => field(r, 'ID') === selectedId);
+      if (refreshed) showDetail(refreshed); else $('detailPanel').hidden = true;
     }
-  } finally { btn.disabled = false; btn.innerHTML = '<span aria-hidden="true">↻</span> Refresh'; }
+  } catch (error) {
+    const cached = localStorage.getItem(CACHE_KEY);
+    if (cached) {
+      const parsed = parseCSV(cached);
+      state.headers = parsed.headers;
+      state.rows = parsed.records.filter(row => !isExcluded(row));
+      populateFilters(); renderCatalogue();
+      $('statusText').textContent = `Offline copy · Could not refresh from Google Sheets (${error.message})`;
+    } else {
+      $('statusText').textContent = `Could not load catalogue: ${error.message}. Check that the sheet is published as CSV and try again.`;
+      $('catalogue').innerHTML = '<div class="empty-state">The catalogue could not be loaded. Check your connection, then select <strong>Refresh catalogue</strong>.</div>';
+    }
+  } finally {
+    state.loading = false;
+    $('refreshButton').disabled = false;
+    $('refreshButton').innerHTML = '<span aria-hidden="true">↻</span> Refresh catalogue';
+  }
 }
-$("searchInput").addEventListener("input", render);
-$("sortSelect").addEventListener("change", render);
-Object.values(filterIds).forEach(id => $(id).addEventListener("change", render));
-$("refreshBtn").addEventListener("click", loadData);
-$("closeDialog").addEventListener("click", () => $("detailDialog").close());
-$("detailDialog").addEventListener("click", e => { if (e.target === $("detailDialog")) $("detailDialog").close(); });
-if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
-  window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js").catch(console.warn));
-}
-loadData();
+['searchInput', 'groupFilter', 'eraFilter', 'rangeFilter', 'doctorFilter', 'libraryFilter'].forEach(id => $(id).addEventListener(id === 'searchInput' ? 'input' : 'change', renderCatalogue));
+$('refreshButton').addEventListener('click', () => loadCatalogue({ manual: true }));
+if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
+loadCatalogue();

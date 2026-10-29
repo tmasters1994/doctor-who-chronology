@@ -1,18 +1,11 @@
 {
   "name": "Doctor Who Chronology",
   "short_name": "DW Chronology",
-  "description": "A searchable Doctor Who chronology and reference catalogue.",
+  "description": "A personal Doctor Who chronology archive.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#171918",
-  "theme_color": "#171918",
-  "icons": [
-    {
-      "src": "./icon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
-    }
-  ]
+  "background_color": "#0b1730",
+  "theme_color": "#0b1730",
+  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
 }

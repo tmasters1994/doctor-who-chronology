@@ -3,58 +3,39 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#171918">
-  <meta name="description" content="A searchable Doctor Who chronology and reference catalogue.">
+  <meta name="theme-color" content="#0b1730">
+  <meta name="description" content="A personal Doctor Who chronology archive.">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
   <title>Doctor Who Chronology</title>
-  <link rel="manifest" href="./manifest.webmanifest">
-  <link rel="icon" href="./icon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
-  <header class="topbar">
-    <a class="wordmark" href="./" aria-label="The Archive home"><span class="mark">A</span><span>DOCTOR WHO CHRONOLOGY</span></a>
-    <div class="top-actions">
-      <span class="live-dot" aria-hidden="true"></span><span class="top-note">PERSONAL REFERENCE</span>
-      <button id="refreshBtn" class="refresh-button" type="button" title="Reload data from Google Sheets"><span aria-hidden="true">↻</span> Refresh</button>
+  <header class="site-header">
+    <div class="header-copy">
+      <p class="eyebrow">PERSONAL ARCHIVE · CHRONOLOGY</p>
+      <h1>Doctor Who <span>Chronology</span></h1>
+      <p class="subtitle">A guided index through the Doctor's lives and adventures.</p>
     </div>
+    <button id="refreshButton" class="button button-primary" type="button"><span aria-hidden="true">↻</span> Refresh catalogue</button>
   </header>
 
   <main>
-    <section class="intro">
-      <p class="eyebrow">A PERSONAL REFERENCE · CHRONOLOGY INDEX</p>
-      <h1>The Whoniverse<br><em>in order.</em></h1>
-      <p class="intro-copy">A personal index of stories, ranges and eras across the Doctor Who universe. Search the chronology, narrow the collection, and open any record for its details.</p>
-      <div class="rule-meta"><span>CHRONOLOGY INDEX</span><span id="updatedAt">DATA NOT YET LOADED</span></div>
+    <section class="toolbar" aria-label="Catalogue controls">
+      <label class="search-label"><span>Search archive</span><input id="searchInput" type="search" placeholder="Title, ID, Doctor, release…" autocomplete="off"></label>
+      <label><span>Group</span><select id="groupFilter"><option value="">All groups</option></select></label>
+      <label><span>Era</span><select id="eraFilter"><option value="">All eras</option></select></label>
+      <label><span>Range</span><select id="rangeFilter"><option value="">All ranges</option></select></label>
+      <label><span>Doctor</span><select id="doctorFilter"><option value="">All Doctors</option></select></label>
+      <label><span>Library</span><select id="libraryFilter"><option value="">All items</option></select></label>
     </section>
 
-    <section class="archive-section" aria-labelledby="archiveTitle">
-      <div class="section-heading">
-        <div><p class="eyebrow">THE COLLECTION</p><h2 id="archiveTitle">Chronology</h2></div>
-        <p id="recordCount" class="record-count">Loading records…</p>
-      </div>
-      <div class="toolbar">
-        <label class="searchbox"><span class="search-icon" aria-hidden="true">⌕</span><input id="searchInput" type="search" placeholder="Search all fields…" autocomplete="off"><kbd>↵</kbd></label>
-        <label class="sort-control"><span>SORT BY</span><select id="sortSelect" aria-label="Sort records"><option value="default">Sheet order</option></select></label>
-      </div>
-      <div class="filters" aria-label="Filter catalogue">
-        <label class="filter-select"><span>GROUP</span><select id="groupFilter"><option value="">All groups</option></select></label>
-        <label class="filter-select"><span>ERA</span><select id="eraFilter"><option value="">All eras</option></select></label>
-        <label class="filter-select"><span>RANGE</span><select id="rangeFilter"><option value="">All ranges</option></select></label>
-        <label class="filter-select"><span>LIBRARY</span><select id="libraryFilter"><option value="">All records</option></select></label>
-      </div>
-      <div id="status" class="status" role="status">Connecting to the catalogue…</div>
-      <div id="records" class="records"></div>
-      <div class="bottom-rule"><span>END OF INDEX</span><span id="resultSummary"></span></div>
-    </section>
+    <div class="status-line"><p id="statusText" role="status">Loading catalogue…</p><p id="countText"></p></div>
+    <section id="catalogue" class="catalogue" aria-label="Chronology catalogue"></section>
+    <section id="detailPanel" class="detail-panel" aria-live="polite" hidden></section>
   </main>
 
-  <footer><span>DOCTOR WHO CHRONOLOGY</span><span>MAINTAINED IN GOOGLE SHEETS</span></footer>
-
-  <dialog id="detailDialog" class="detail-dialog">
-    <div class="dialog-top"><span class="eyebrow">RECORD DETAILS</span><button id="closeDialog" class="close-button" aria-label="Close details">×</button></div>
-    <div id="detailContent"></div>
-  </dialog>
-
-  <script src="./app.js"></script>
+  <footer class="site-footer"><span>PERSONAL CHRONOLOGY ARCHIVE</span><span>Google Sheets · Live catalogue</span></footer>
+  <script src="app.js"></script>
 </body>
 </html>
