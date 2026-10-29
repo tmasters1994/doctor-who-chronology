@@ -96,15 +96,14 @@ function renderCatalogue() {
           <div class="table-wrap"><table class="catalogue-table${state.compactView ? ' compact-table' : ''}">
             ${state.compactView
               ? '<colgroup><col style="width:18%"><col style="width:82%"></colgroup>'
-              : '<colgroup><col style="width:8%"><col style="width:22%"><col style="width:13%"><col style="width:15%"><col style="width:13%"><col style="width:13%"><col style="width:16%"></colgroup>'}
+              : '<colgroup><col style="width:8%"><col style="width:25%"><col style="width:16%"><col style="width:15%"><col style="width:16%"><col style="width:20%"></colgroup>'}
             <thead><tr>${state.compactView
               ? '<th scope="col">ID</th><th scope="col">Title</th>'
-              : '<th scope="col">ID</th><th scope="col">Title</th><th scope="col">Doctor</th><th scope="col">Range</th><th scope="col">Release</th><th scope="col">Library</th><th scope="col">Release date</th>'}</tr></thead>
+              : '<th scope="col">ID</th><th scope="col">Title</th><th scope="col">Range</th><th scope="col">Release</th><th scope="col">Library</th><th scope="col">Release date</th>'}</tr></thead>
             <tbody>${era.rows.map(row => `<tr>
               <td class="id-cell">${escapeHtml(field(row, 'ID') || '—')}</td>
               <td><button type="button" class="title-button" data-record-id="${escapeHtml(field(row, 'ID'))}">${formatTitle(field(row, 'TITLE') || 'Untitled')}</button></td>
-              ${state.compactView ? '' : `<td>${escapeHtml(field(row, 'DOCTOR') || '—')}</td>
-              <td>${field(row, 'RANGE') ? `<span class="tag">${escapeHtml(field(row, 'RANGE'))}</span>` : '—'}</td>
+              ${state.compactView ? '' : `<td>${field(row, 'RANGE') ? `<span class="tag">${escapeHtml(field(row, 'RANGE'))}</span>` : '—'}</td>
               <td>${escapeHtml(field(row, 'RELEASE') || '—')}</td>
               <td>${escapeHtml(field(row, 'LIBRARY') || '—')}</td>
               <td>${escapeHtml(field(row, 'RELEASE DATE') || '—')}</td>`}
