@@ -1,7 +1,7 @@
 'use strict';
 
 const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRHeYBfAFZj_bhEH4ncnGPwccoF8JaAxsRYzuaeJguThQXLWldk87ewRZhrwm5eH5yZs_iKCdBx3pEf/pub?output=csv';
-const CACHE_KEY = 'dw-chronology-csv-v4';
+const CACHE_KEY = 'dw-chronology-csv-v5';
 const $ = (id) => document.getElementById(id);
 const state = { rows: [], headers: [], selected: null, loading: false };
 
@@ -63,7 +63,7 @@ function filteredRows() {
     if ($('doctorFilter').value && field(row, 'DOCTOR') !== $('doctorFilter').value) return false;
     if ($('libraryFilter').value && field(row, 'LIBRARY') !== $('libraryFilter').value) return false;
     if (q) {
-      const haystack = [field(row, 'ID'), field(row, 'TITLE'), field(row, 'GROUP'), field(row, 'ERA'), field(row, 'RANGE'), field(row, 'RELEASE'), field(row, 'LIBRARY'), field(row, 'RELEASE DATE'), field(row, 'DOCTOR')].join(' ').toLocaleLowerCase();
+      const haystack = [field(row, 'ID'), field(row, 'TITLE'), field(row, 'GROUP'), field(row, 'ERA'), field(row, 'RANGE'), field(row, 'RELEASE'), field(row, 'LIBRARY'), field(row, 'RELEASE DATE'), field(row, 'DOCTOR'), field(row, 'SYNOPSIS')].join(' ').toLocaleLowerCase();
       if (!haystack.includes(q)) return false;
     }
     return true;
@@ -125,9 +125,12 @@ function showDetail(row) {
   const details = ['DOCTOR', 'GROUP', 'ERA', 'RANGE', 'RELEASE', 'RELEASE DATE', 'LIBRARY'];
   const cover = safeImageUrl(field(row, 'COVER ART')) || safeImageUrl(field(row, 'COVERART')) || safeImageUrl(field(row, 'COVER'));
   const meta = details.map(name => `<div class="meta-item"><dt>${escapeHtml(name === 'RELEASE DATE' ? 'Release date' : name[0] + name.slice(1).toLowerCase())}</dt><dd>${escapeHtml(field(row, name) || '—')}</dd></div>`).join('');
+  const synopsis = field(row, 'SYNOPSIS');
+  const synopsisContent = synopsis ? escapeHtml(synopsis).replace(/\r?\n/g, '<br>') : '<span class="synopsis-empty">No synopsis supplied yet. Add text to the <strong>SYNOPSIS</strong> column in your Google Sheet.</span>';
   $('detailPanel').innerHTML = `
     <div class="detail-top"><div><p class="detail-kicker">Catalogue entry</p><h2 id="detailTitle" class="detail-title">${escapeHtml(field(row, 'TITLE') || 'Untitled')}</h2><p class="detail-id">Chronology ID: ${escapeHtml(field(row, 'ID') || '—')}</p></div><button id="closeDetail" class="button button-secondary" type="button">Close details ✕</button></div>
-    <div class="detail-layout"><dl class="detail-meta">${meta}</dl><figure class="cover-art">${cover ? `<img src="${escapeHtml(cover)}" alt="Cover art for ${escapeHtml(field(row, 'TITLE') || 'this item')}" loading="lazy"><figcaption>Cover art</figcaption>` : `<div class="cover-placeholder">No cover art supplied yet.<br><span>Add a direct image URL in the <strong>COVER ART</strong> column.</span></div>`}</figure></div>`;
+    <div class="detail-layout"><dl class="detail-meta">${meta}</dl><figure class="cover-art">${cover ? `<img src="${escapeHtml(cover)}" alt="Cover art for ${escapeHtml(field(row, 'TITLE') || 'this item')}" loading="lazy"><figcaption>Cover art</figcaption>` : `<div class="cover-placeholder">No cover art supplied yet.<br><span>Add a direct image URL in the <strong>COVER ART</strong> column.</span></div>`}</figure></div>
+    <section class="synopsis-section" aria-labelledby="synopsisHeading"><h3 id="synopsisHeading">Synopsis</h3><p class="synopsis-text">${synopsisContent}</p></section>`;
   if (!$('detailPanel').open) $('detailPanel').showModal();
   $('closeDetail').addEventListener('click', () => $('detailPanel').close());
   const img = $('detailPanel').querySelector('img');

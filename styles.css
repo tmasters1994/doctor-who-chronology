@@ -69,6 +69,10 @@ tbody tr:hover { background: rgba(215,169,107,.06); }
 .cover-art img { display: block; width: 100%; max-height: 480px; object-fit: contain; object-position: top center; border: 1px solid var(--line); border-radius: 8px; background: #091226; }
 .cover-art figcaption { margin-top: 8px; color: var(--muted); font-size: .75rem; text-align: center; }
 .cover-placeholder { display: grid; place-items: center; min-height: 260px; border: 1px dashed var(--line); border-radius: 8px; color: var(--muted); text-align: center; padding: 20px; }
+.synopsis-section { margin-top: 26px; padding-top: 20px; border-top: 1px solid var(--line); }
+.synopsis-section h3 { margin: 0 0 10px; color: var(--gold); font-size: 1rem; letter-spacing: .02em; }
+.synopsis-text { margin: 0; color: var(--text); line-height: 1.75; white-space: normal; overflow-wrap: anywhere; }
+.synopsis-empty { color: var(--muted); font-size: .92rem; }
 .detail-error { color: var(--danger); }
 .site-footer { max-width: 1500px; margin: 0 auto; padding: 18px 30px 28px; border-top: 1px solid var(--line); display: flex; justify-content: space-between; gap: 12px; font-size: .64rem; color: var(--muted); }
 .site-footer span:first-child { color: var(--gold); }
