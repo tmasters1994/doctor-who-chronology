@@ -94,6 +94,7 @@ function renderCatalogue() {
         <div class="era-block">
           <div class="era-heading"><span>${escapeHtml(era.name)}</span><span class="era-count">${era.rows.length} item${era.rows.length === 1 ? '' : 's'}</span></div>
           <div class="table-wrap"><table>
+            <colgroup><col style="width:9%"><col style="width:28%"><col style="width:13%"><col style="width:12%"><col style="width:12%"><col style="width:12%"><col style="width:14%"></colgroup>
             <thead><tr><th scope="col">ID</th><th scope="col">Title</th><th scope="col">Doctor</th><th scope="col">Range</th><th scope="col">Release</th><th scope="col">Library</th><th scope="col">Release date</th></tr></thead>
             <tbody>${era.rows.map(row => `<tr>
               <td class="id-cell">${escapeHtml(field(row, 'ID') || '—')}</td>
@@ -125,13 +126,12 @@ function showDetail(row) {
   const cover = safeImageUrl(field(row, 'COVER ART')) || safeImageUrl(field(row, 'COVERART')) || safeImageUrl(field(row, 'COVER'));
   const meta = details.map(name => `<div class="meta-item"><dt>${escapeHtml(name === 'RELEASE DATE' ? 'Release date' : name[0] + name.slice(1).toLowerCase())}</dt><dd>${escapeHtml(field(row, name) || '—')}</dd></div>`).join('');
   $('detailPanel').innerHTML = `
-    <div class="detail-top"><div><p class="detail-kicker">Catalogue entry</p><h2 class="detail-title">${escapeHtml(field(row, 'TITLE') || 'Untitled')}</h2><p class="detail-id">Chronology ID: ${escapeHtml(field(row, 'ID') || '—')}</p></div><button id="closeDetail" class="button button-secondary" type="button">Close details ✕</button></div>
+    <div class="detail-top"><div><p class="detail-kicker">Catalogue entry</p><h2 id="detailTitle" class="detail-title">${escapeHtml(field(row, 'TITLE') || 'Untitled')}</h2><p class="detail-id">Chronology ID: ${escapeHtml(field(row, 'ID') || '—')}</p></div><button id="closeDetail" class="button button-secondary" type="button">Close details ✕</button></div>
     <div class="detail-layout"><dl class="detail-meta">${meta}</dl><figure class="cover-art">${cover ? `<img src="${escapeHtml(cover)}" alt="Cover art for ${escapeHtml(field(row, 'TITLE') || 'this item')}" loading="lazy"><figcaption>Cover art</figcaption>` : `<div class="cover-placeholder">No cover art supplied yet.<br><span>Add a direct image URL in the <strong>COVER ART</strong> column.</span></div>`}</figure></div>`;
-  $('detailPanel').hidden = false;
-  $('closeDetail').addEventListener('click', () => { $('detailPanel').hidden = true; state.selected = null; });
+  if (!$('detailPanel').open) $('detailPanel').showModal();
+  $('closeDetail').addEventListener('click', () => $('detailPanel').close());
   const img = $('detailPanel').querySelector('img');
   if (img) img.addEventListener('error', () => { const figure = img.closest('figure'); figure.innerHTML = '<div class="cover-placeholder detail-error">Cover art could not be loaded. Check that the URL points directly to a publicly accessible image.</div>'; }, { once: true });
-  $('detailPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 async function loadCatalogue({ manual = false } = {}) {
   if (state.loading) return;
@@ -152,10 +152,10 @@ async function loadCatalogue({ manual = false } = {}) {
     populateFilters();
     renderCatalogue();
     $('statusText').textContent = `Connected to Google Sheets · Updated ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
-    if (!$('detailPanel').hidden && state.selected) {
+    if ($('detailPanel').open && state.selected) {
       const selectedId = field(state.selected, 'ID');
       const refreshed = state.rows.find(r => field(r, 'ID') === selectedId);
-      if (refreshed) showDetail(refreshed); else $('detailPanel').hidden = true;
+      if (refreshed) showDetail(refreshed); else $('detailPanel').close();
     }
   } catch (error) {
     const cached = localStorage.getItem(CACHE_KEY);
@@ -176,6 +176,8 @@ async function loadCatalogue({ manual = false } = {}) {
   }
 }
 ['searchInput', 'groupFilter', 'eraFilter', 'rangeFilter', 'doctorFilter', 'libraryFilter'].forEach(id => $(id).addEventListener(id === 'searchInput' ? 'input' : 'change', renderCatalogue));
+$('detailPanel').addEventListener('close', () => { state.selected = null; });
+$('detailPanel').addEventListener('click', event => { if (event.target === $('detailPanel')) $('detailPanel').close(); });
 $('refreshButton').addEventListener('click', () => loadCatalogue({ manual: true }));
 if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
 loadCatalogue();
