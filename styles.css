@@ -51,6 +51,9 @@ tbody tr:hover { background: rgba(215,169,107,.06); }
 .id-cell { color: var(--gold); font-size: .79rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .title-button { display: inline-block; max-width: 100%; padding: 0; border: 0; background: none; color: var(--text); font-weight: 700; text-align: left; white-space: normal; overflow-wrap: anywhere; cursor: pointer; }
 .title-button:hover { color: var(--gold-light); text-decoration: underline; text-underline-offset: 3px; }
+.title-main { display: block; font-weight: 700; }
+.title-subtitle { display: block; font-weight: 400; }
+.detail-title .title-subtitle { margin-top: .12em; }
 .subline { display: block; color: var(--muted); font-size: .78rem; font-weight: 400; margin-top: 2px; }
 .tag { display: inline-block; max-width: 100%; border: 1px solid #354765; border-radius: 999px; padding: 2px 8px; color: #c7d1e0; font-size: .75rem; white-space: normal; overflow-wrap: anywhere; }
 .empty-state { padding: 38px 20px; text-align: center; border: 1px dashed var(--line); border-radius: 12px; color: var(--muted); }

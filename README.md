@@ -11,7 +11,7 @@ A static progressive web app for a personal Doctor Who chronology catalogue. It 
 
 ## Google Sheet columns
 
-The app recognises these headers (case-insensitive): `ID`, `TITLE`, `GROUP`, `ERA`, `RANGE`, `RELEASE`, `LIBRARY`, `RELEASE DATE`, `DOCTOR`, and `COVER ART`.
+The app recognises these headers (case-insensitive): `ID`, `TITLE`, `GROUP`, `ERA`, `RANGE`, `RELEASE`, `LIBRARY`, `RELEASE DATE`, `DOCTOR`, `COVER ART`, and `SYNOPSIS`.
 
 - Add `DOCTOR` for the Doctor associated with an entry.
 - Add `COVER ART` with a direct, publicly accessible `https://` image URL. Cover art appears only in the entry details panel, not in the chronology table.
@@ -22,6 +22,7 @@ The app recognises these headers (case-insensitive): `ID`, `TITLE`, `GROUP`, `ER
 
 - Search and filters for Group, Era, Range, Doctor, and Library.
 - Chronology grouped by Group and Era, with natural alphanumeric ID ordering.
-- Details panel with metadata and optional cover art.
+- Details panel with metadata, optional cover art, and synopsis.
+- Titles containing a colon automatically display the text before the first colon in bold, with the text after it on a new line in regular weight.
 - Manual refresh and cached fallback when the network is unavailable.
 - Dark-blue archive theme and Calibri-style sans-serif typography.

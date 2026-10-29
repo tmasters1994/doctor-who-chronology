@@ -98,7 +98,7 @@ function renderCatalogue() {
             <thead><tr><th scope="col">ID</th><th scope="col">Title</th><th scope="col">Doctor</th><th scope="col">Range</th><th scope="col">Release</th><th scope="col">Library</th><th scope="col">Release date</th></tr></thead>
             <tbody>${era.rows.map(row => `<tr>
               <td class="id-cell">${escapeHtml(field(row, 'ID') || '—')}</td>
-              <td><button type="button" class="title-button" data-record-id="${escapeHtml(field(row, 'ID'))}">${escapeHtml(field(row, 'TITLE') || 'Untitled')}</button></td>
+              <td><button type="button" class="title-button" data-record-id="${escapeHtml(field(row, 'ID'))}">${formatTitle(field(row, 'TITLE') || 'Untitled')}</button></td>
               <td>${escapeHtml(field(row, 'DOCTOR') || '—')}</td>
               <td>${field(row, 'RANGE') ? `<span class="tag">${escapeHtml(field(row, 'RANGE'))}</span>` : '—'}</td>
               <td>${escapeHtml(field(row, 'RELEASE') || '—')}</td>
@@ -114,6 +114,14 @@ function renderCatalogue() {
     if (record) showDetail(record);
   }));
 }
+function formatTitle(raw) {
+  const title = String(raw ?? '').trim() || 'Untitled';
+  const colon = title.indexOf(':');
+  if (colon === -1) return `<span class="title-main">${escapeHtml(title)}</span>`;
+  const main = title.slice(0, colon).trim();
+  const subtitle = title.slice(colon + 1).trim();
+  return `<span class="title-main">${escapeHtml(main)}</span>${subtitle ? `<span class="title-subtitle">${escapeHtml(subtitle)}</span>` : ''}`;
+}
 function safeImageUrl(raw) {
   const value = String(raw ?? '').trim();
   if (!value) return '';
@@ -128,7 +136,7 @@ function showDetail(row) {
   const synopsis = field(row, 'SYNOPSIS');
   const synopsisContent = synopsis ? escapeHtml(synopsis).replace(/\r?\n/g, '<br>') : '<span class="synopsis-empty">No synopsis supplied yet. Add text to the <strong>SYNOPSIS</strong> column in your Google Sheet.</span>';
   $('detailPanel').innerHTML = `
-    <div class="detail-top"><div><p class="detail-kicker">Catalogue entry</p><h2 id="detailTitle" class="detail-title">${escapeHtml(field(row, 'TITLE') || 'Untitled')}</h2><p class="detail-id">Chronology ID: ${escapeHtml(field(row, 'ID') || '—')}</p></div><button id="closeDetail" class="button button-secondary" type="button">Close details ✕</button></div>
+    <div class="detail-top"><div><p class="detail-kicker">Catalogue entry</p><h2 id="detailTitle" class="detail-title">${formatTitle(field(row, 'TITLE') || 'Untitled')}</h2><p class="detail-id">Chronology ID: ${escapeHtml(field(row, 'ID') || '—')}</p></div><button id="closeDetail" class="button button-secondary" type="button">Close details ✕</button></div>
     <div class="detail-layout"><dl class="detail-meta">${meta}</dl><figure class="cover-art">${cover ? `<img src="${escapeHtml(cover)}" alt="Cover art for ${escapeHtml(field(row, 'TITLE') || 'this item')}" loading="lazy"><figcaption>Cover art</figcaption>` : `<div class="cover-placeholder">No cover art supplied yet.<br><span>Add a direct image URL in the <strong>COVER ART</strong> column.</span></div>`}</figure></div>
     <section class="synopsis-section" aria-labelledby="synopsisHeading"><h3 id="synopsisHeading">Synopsis</h3><p class="synopsis-text">${synopsisContent}</p></section>`;
   if (!$('detailPanel').open) $('detailPanel').showModal();
