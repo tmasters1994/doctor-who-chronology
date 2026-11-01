@@ -214,7 +214,7 @@ function renderCatalogue() {
             <thead><tr>${state.compactView
               ? '<th scope="col">ID</th><th scope="col">Title</th>'
               : '<th scope="col">ID</th><th scope="col">Title</th><th scope="col">Range</th><th scope="col">Release</th><th scope="col">Library</th><th scope="col">Release date</th>'}</tr></thead>
-            <tbody>${era.rows.map(row => `<tr class="${field(row, 'ID').includes('–') ? 'unresolved-id' : ''}">
+            <tbody>${era.rows.map(row => `<tr class="${field(row, 'ID').includes('–') && !normalizeRangeName(field(row, 'RANGE')).includes('occurs here') ? 'unresolved-id' : ''}">
               <td class="id-cell">${escapeHtml(field(row, 'ID') || '—')}</td>
               <td><button type="button" class="title-button"${titleColourStyle(row)} data-record-id="${escapeHtml(field(row, 'ID'))}">${formatTitle(field(row, 'TITLE') || 'Untitled')}</button></td>
               ${state.compactView ? '' : `<td>${field(row, 'RANGE') ? `<span class="tag"${rangeColour(row) ? ` style="--range-colour:${rangeColour(row)};--range-bg:${darkenHexColour(rangeColour(row))}"` : ''}>${escapeHtml(field(row, 'RANGE'))}</span>` : '—'}</td>
