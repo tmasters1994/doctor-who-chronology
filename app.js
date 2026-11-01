@@ -5,7 +5,8 @@ const CACHE_KEY = 'dw-chronology-csv-v5';
 // Set this to the published CSV URL for the RANGE COLOURS tab. See README.md.
 const RANGE_COLOURS_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRHeYBfAFZj_bhEH4ncnGPwccoF8JaAxsRYzuaeJguThQXLWldk87ewRZhrwm5eH5yZs_iKCdBx3pEf/pub?gid=92377743&single=true&output=csv';
 const $ = (id) => document.getElementById(id);
-const state = { rows: [], headers: [], selected: null, loading: false, rangeColours: new Map(), compactView: localStorage.getItem('dw-chronology-compact-view') === 'true' };
+const savedViewMode = localStorage.getItem('dw-chronology-view-mode') || (localStorage.getItem('dw-chronology-compact-view') === 'true' ? 'compact' : 'standard');
+const state = { rows: [], headers: [], selected: null, loading: false, rangeColours: new Map(), viewMode: ['standard', 'compact', 'covers'].includes(savedViewMode) ? savedViewMode : 'standard' };
 
 function normalizeHeader(value) { return String(value ?? '').replace(/^\uFEFF/, '').trim().toUpperCase(); }
 function field(row, name) {
@@ -209,20 +210,28 @@ function renderCatalogue() {
       ${group.eras.map(era => `
         <div class="era-block">
           <div class="era-heading"><span>${escapeHtml(era.name)}</span><span class="era-count">${era.rows.length} item${era.rows.length === 1 ? '' : 's'}</span></div>
-          <div class="table-wrap"><table class="catalogue-table${state.compactView ? ' compact-table' : ''}">
-            ${state.compactView
+          <div class="table-wrap"><table class="catalogue-table${state.viewMode !== 'standard' ? ' compact-table' : ''}">
+            ${state.viewMode === 'compact'
               ? '<colgroup><col style="width:18%"><col style="width:82%"></colgroup>'
-              : '<colgroup><col style="width:8%"><col style="width:25%"><col style="width:16%"><col style="width:15%"><col style="width:16%"><col style="width:20%"></colgroup>'}
-            <thead><tr>${state.compactView
+              : state.viewMode === 'covers'
+                ? '<colgroup><col style="width:76px"><col style="width:auto"></colgroup>'
+                : '<colgroup><col style="width:8%"><col style="width:25%"><col style="width:16%"><col style="width:15%"><col style="width:16%"><col style="width:20%"></colgroup>'}
+            <thead><tr>${state.viewMode === 'compact'
               ? '<th scope="col">ID</th><th scope="col">Title</th>'
-              : '<th scope="col">ID</th><th scope="col">Title</th><th scope="col">Range</th><th scope="col">Release</th><th scope="col">Library</th><th scope="col">Release date</th>'}</tr></thead>
+              : state.viewMode === 'covers'
+                ? '<th scope="col">Cover</th><th scope="col">Title</th>'
+                : '<th scope="col">ID</th><th scope="col">Title</th><th scope="col">Range</th><th scope="col">Release</th><th scope="col">Library</th><th scope="col">Release date</th>'}</tr></thead>
             <tbody>${era.rows.map(row => `<tr class="${field(row, 'ID').includes('–') && !normalizeRangeName(field(row, 'RANGE')).includes('occurs here') ? 'unresolved-id' : ''}">
-              <td class="id-cell">${escapeHtml(field(row, 'ID') || '—')}</td>
+              ${state.viewMode === 'covers'
+                ? `<td class="cover-thumb-cell"><button type="button" class="cover-thumb-button" data-record-id="${escapeHtml(field(row, 'ID'))}" aria-label="Open details for ${escapeHtml(field(row, 'TITLE') || 'this item')}">${(safeImageUrl(field(row, 'COVER ART')) || safeImageUrl(field(row, 'COVERART')) || safeImageUrl(field(row, 'COVER'))) ? `<img class="cover-thumb" src="${escapeHtml(safeImageUrl(field(row, 'COVER ART')) || safeImageUrl(field(row, 'COVERART')) || safeImageUrl(field(row, 'COVER')))}" alt="" loading="lazy">` : '<span class="cover-thumb-placeholder" aria-hidden="true"><span>NO<br>COVER</span></span>'}</button></td>`
+                : state.viewMode === 'compact'
+                  ? `<td class="id-cell">${escapeHtml(field(row, 'ID') || '—')}</td>`
+                  : `<td class="id-cell">${escapeHtml(field(row, 'ID') || '—')}</td>`}
               <td><button type="button" class="title-button"${titleColourStyle(row)} data-record-id="${escapeHtml(field(row, 'ID'))}">${formatTitle(field(row, 'TITLE') || 'Untitled')}</button></td>
-              ${state.compactView ? '' : `<td>${field(row, 'RANGE') ? `<span class="tag"${rangeColour(row) ? ` style="--range-colour:${rangeColour(row)};--range-bg:${darkenHexColour(rangeColour(row))}"` : ''}>${escapeHtml(field(row, 'RANGE'))}</span>` : '—'}</td>
-              <td>${escapeHtml(field(row, 'RELEASE') || '—')}</td>
+              ${state.viewMode === 'standard' ? `<td>${field(row, 'RANGE') ? `<span class="tag"${rangeColour(row) ? ` style="--range-colour:${rangeColour(row)};--range-bg:${darkenHexColour(rangeColour(row))}"` : ''}>${escapeHtml(field(row, 'RANGE'))}</span>` : '—'}</td>` : ''}
+              ${state.viewMode === 'standard' ? `<td>${escapeHtml(field(row, 'RELEASE') || '—')}</td>
               <td>${escapeHtml(field(row, 'LIBRARY') || '—')}</td>
-              <td>${escapeHtml(field(row, 'RELEASE DATE') || '—')}</td>`}
+              <td>${escapeHtml(field(row, 'RELEASE DATE') || '—')}</td>` : ''}
             </tr>`).join('')}</tbody>
           </table></div>
         </div>`).join('')}
@@ -406,10 +415,11 @@ async function loadCatalogue({ manual = false } = {}) {
 }
 ['writerFilter', 'groupFilter', 'eraFilter', 'rangeFilter', 'doctorFilter', 'libraryFilter'].forEach(id => $(id).addEventListener('change', renderCatalogue));
 $('searchInput').addEventListener('input', renderCatalogue);
-$('compactViewToggle').checked = state.compactView;
-$('compactViewToggle').addEventListener('change', () => {
-  state.compactView = $('compactViewToggle').checked;
-  localStorage.setItem('dw-chronology-compact-view', String(state.compactView));
+$('viewModeSelect').value = state.viewMode;
+$('viewModeSelect').addEventListener('change', () => {
+  state.viewMode = $('viewModeSelect').value;
+  localStorage.setItem('dw-chronology-view-mode', state.viewMode);
+  localStorage.setItem('dw-chronology-compact-view', String(state.viewMode === 'compact'));
   renderCatalogue();
 });
 $('detailPanel').addEventListener('close', () => { state.selected = null; });
