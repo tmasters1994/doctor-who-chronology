@@ -84,6 +84,10 @@ tbody tr:hover { background: rgba(215,169,107,.06); }
 .meta-item:nth-child(even) { border-radius: 0 7px 7px 0; }
 .meta-item dt { color: var(--muted); font-size: .7rem; text-transform: uppercase; letter-spacing: .09em; margin-bottom: 4px; }
 .meta-item dd { margin: 0; overflow-wrap: anywhere; }
+.library-status { display: inline-block; padding: 3px 9px; border-radius: 999px; font-size: .82rem; font-weight: 600; line-height: 1.35; border: 1px solid transparent; }
+.library-status-yes { color: #d9fbe5; background: rgba(34, 145, 82, .24); border-color: rgba(76, 190, 121, .55); }
+.library-status-no { color: #ffe0e0; background: rgba(190, 55, 55, .24); border-color: rgba(225, 91, 91, .55); }
+.library-status-cd { color: #fff0bd; background: rgba(190, 145, 35, .24); border-color: rgba(224, 181, 73, .6); }
 .cover-art { margin: 22px 0 0; width: 100%; }
 .cover-art img { display: block; width: 100%; max-width: 640px; height: auto; max-height: none; margin-inline: auto; object-fit: contain; object-position: top center; border: 1px solid var(--detail-border); border-radius: 8px; background: var(--detail-surface); }
 .cover-art figcaption { margin-top: 8px; color: var(--muted); font-size: .75rem; text-align: center; }

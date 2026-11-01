@@ -85,6 +85,12 @@ function naturalCompare(a, b) { return String(a).localeCompare(String(b), undefi
 function uniqueValues(rows, name) {
   return [...new Set(rows.map(r => field(r, name)).filter(Boolean))].sort(naturalCompare);
 }
+// Writer and publisher cells may contain several credits separated by semicolons.
+// Treat each trimmed credit as its own searchable term while preserving the
+// original combined value for display in the details pop-up.
+function splitCredits(value) {
+  return String(value ?? '').split(';').map(name => name.trim()).filter(Boolean);
+}
 function setOptions(select, values, defaultLabel) {
   const previous = select.value;
   select.innerHTML = `<option value="">${escapeHtml(defaultLabel)}</option>` + values.map(v => `<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join('');
@@ -106,7 +112,14 @@ function filteredRows() {
     if ($('doctorFilter').value && field(row, 'DOCTOR') !== $('doctorFilter').value) return false;
     if ($('libraryFilter').value && field(row, 'LIBRARY') !== $('libraryFilter').value) return false;
     if (q) {
-      const haystack = [field(row, 'ID'), field(row, 'TITLE'), field(row, 'GROUP'), field(row, 'ERA'), field(row, 'RANGE'), field(row, 'RELEASE'), field(row, 'LIBRARY'), field(row, 'RELEASE DATE'), field(row, 'DOCTOR'), field(row, 'SYNOPSIS')].join(' ').toLocaleLowerCase();
+      const haystack = [
+        field(row, 'ID'), field(row, 'TITLE'), field(row, 'GROUP'), field(row, 'ERA'),
+        field(row, 'RANGE'), field(row, 'RELEASE'), field(row, 'LIBRARY'),
+        field(row, 'RELEASE DATE'), field(row, 'DOCTOR'),
+        ...splitCredits(field(row, 'WRITER')),
+        ...splitCredits(field(row, 'PUBLISHER')),
+        field(row, 'SYNOPSIS')
+      ].join(' ').toLocaleLowerCase();
       if (!haystack.includes(q)) return false;
     }
     return true;
@@ -245,9 +258,18 @@ function sampleCoverPalette(url) {
 function showDetail(row) {
   state.selected = row;
   resetDetailPalette();
-  const details = ['DOCTOR', 'ID', 'GROUP', 'ERA', 'RANGE', 'RELEASE', 'RELEASE DATE', 'LIBRARY'];
+  const details = ['DOCTOR', 'ID', 'GROUP', 'ERA', 'RANGE', 'RELEASE', 'RELEASE DATE', 'WRITER', 'PUBLISHER', 'LIBRARY'];
   const cover = safeImageUrl(field(row, 'COVER ART')) || safeImageUrl(field(row, 'COVERART')) || safeImageUrl(field(row, 'COVER'));
-  const meta = details.map(name => `<div class="meta-item"><dt>${escapeHtml(name === 'RELEASE DATE' ? 'Release date' : name[0] + name.slice(1).toLowerCase())}</dt><dd>${escapeHtml(field(row, name) || '—')}</dd></div>`).join('');
+  const meta = details.map(name => {
+    const value = field(row, name);
+    const label = name === 'RELEASE DATE' ? 'Release date' : name[0] + name.slice(1).toLowerCase();
+    if (name === 'LIBRARY') {
+      const status = value.toLocaleLowerCase();
+      const statusClass = status === 'yes' ? 'library-status-yes' : status === 'no' ? 'library-status-no' : status === 'cd only' ? 'library-status-cd' : '';
+      return `<div class="meta-item"><dt>${label}</dt><dd>${value ? `<span class="library-status ${statusClass}">${escapeHtml(value)}</span>` : '—'}</dd></div>`;
+    }
+    return `<div class="meta-item"><dt>${escapeHtml(label)}</dt><dd>${escapeHtml(value || '—')}</dd></div>`;
+  }).join('');
   const synopsis = field(row, 'SYNOPSIS');
   const synopsisContent = synopsis ? escapeHtml(synopsis).replace(/\r?\n/g, '<br>') : '<span class="synopsis-empty">No synopsis supplied yet. Add text to the <strong>SYNOPSIS</strong> column in your Google Sheet.</span>';
   $('detailPanel').innerHTML = `
