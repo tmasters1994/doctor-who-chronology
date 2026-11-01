@@ -31,3 +31,19 @@ The app recognises these headers (case-insensitive): `ID`, `TITLE`, `GROUP`, `ER
 ## Compact view (v12)
 
 Use the **Compact view** checkbox above the catalogue to switch between the full table and a two-column view showing ID and Title. Group and Era remain as section headings separating the tables; they are not repeated as columns. The selection is remembered in this browser.
+
+
+## Editable range colour associations (v23)
+
+Create a second tab in the same Google spreadsheet named **RANGE COLOURS** with these exact headers:
+
+| RANGE | COLOUR |
+|---|---|
+| First Doctor Era | #8B6EAA |
+| Third Doctor Era | #4D9B83 |
+
+Use one row per exact `RANGE` value from the catalogue. Colour values may be `#RGB` or `#RRGGBB` hexadecimal codes. Matching is case-insensitive. Rows without a valid colour, and catalogue ranges without a matching row, keep the normal appearance.
+
+Publish the **RANGE COLOURS** tab as CSV and copy its published CSV URL. In `app.js`, paste that URL into `RANGE_COLOURS_CSV_URL` near the top of the file. The app applies the chosen colour to story title text (including subtitles) and uses a darkened version as the background of the rounded Range pill. The brighter colour is used for the pill text. The same styling appears in the details panel.
+
+The published CSV URL is separate from the main catalogue CSV URL. The range-colour table is fetched whenever the catalogue is refreshed.

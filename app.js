@@ -2,8 +2,10 @@
 
 const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRHeYBfAFZj_bhEH4ncnGPwccoF8JaAxsRYzuaeJguThQXLWldk87ewRZhrwm5eH5yZs_iKCdBx3pEf/pub?output=csv';
 const CACHE_KEY = 'dw-chronology-csv-v5';
+// Set this to the published CSV URL for the RANGE COLOURS tab. See README.md.
+const RANGE_COLOURS_CSV_URL = '';
 const $ = (id) => document.getElementById(id);
-const state = { rows: [], headers: [], selected: null, loading: false, compactView: localStorage.getItem('dw-chronology-compact-view') === 'true' };
+const state = { rows: [], headers: [], selected: null, loading: false, rangeColours: new Map(), compactView: localStorage.getItem('dw-chronology-compact-view') === 'true' };
 
 function normalizeHeader(value) { return String(value ?? '').replace(/^\uFEFF/, '').trim().toUpperCase(); }
 function field(row, name) {
@@ -91,6 +93,45 @@ function uniqueValues(rows, name) {
 function splitCredits(value) {
   return String(value ?? '').split(';').map(name => name.trim()).filter(Boolean);
 }
+
+// Editable range-to-colour associations are loaded from a second published CSV tab.
+function normalizeHexColour(value) {
+  let hex = String(value ?? '').trim();
+  if (!hex) return '';
+  if (!hex.startsWith('#')) hex = `#${hex}`;
+  if (/^#[0-9a-f]{3}$/i.test(hex)) hex = '#' + [...hex.slice(1)].map(ch => ch + ch).join('');
+  return /^#[0-9a-f]{6}$/i.test(hex) ? hex.toUpperCase() : '';
+}
+function darkenHexColour(hex, factor = 0.34) {
+  const normalized = normalizeHexColour(hex);
+  if (!normalized) return '';
+  const channels = [1, 3, 5].map(i => Math.round(parseInt(normalized.slice(i, i + 2), 16) * factor));
+  return '#' + channels.map(value => value.toString(16).padStart(2, '0')).join('');
+}
+function rangeColour(row) {
+  return state.rangeColours.get(field(row, 'RANGE').toLocaleLowerCase()) || '';
+}
+function titleColourStyle(row) {
+  const colour = rangeColour(row);
+  return colour ? ` style="--range-colour:${colour}"` : '';
+}
+async function loadRangeColours() {
+  if (!RANGE_COLOURS_CSV_URL) return;
+  try {
+    const response = await fetch(`${RANGE_COLOURS_CSV_URL}${RANGE_COLOURS_CSV_URL.includes('?') ? '&' : '?'}_=${Date.now()}`, { cache: 'no-store' });
+    if (!response.ok) throw new Error(`Range colour sheet returned HTTP ${response.status}`);
+    const parsed = parseCSV(await response.text());
+    const next = new Map();
+    for (const row of parsed.records) {
+      const name = field(row, 'RANGE');
+      const colour = normalizeHexColour(field(row, 'COLOUR'));
+      if (name && colour) next.set(name.toLocaleLowerCase(), colour);
+    }
+    state.rangeColours = next;
+  } catch (error) {
+    console.warn('Could not load range colour associations:', error);
+  }
+}
 function setOptions(select, values, defaultLabel) {
   const previous = select.value;
   select.innerHTML = `<option value="">${escapeHtml(defaultLabel)}</option>` + values.map(v => `<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join('');
@@ -105,12 +146,14 @@ function populateFilters() {
 }
 function filteredRows() {
   const q = $('searchInput').value.trim().toLocaleLowerCase();
+  const writerQuery = $('writerSearchInput').value.trim().toLocaleLowerCase();
   return state.rows.filter(row => {
     if ($('groupFilter').value && field(row, 'GROUP') !== $('groupFilter').value) return false;
     if ($('eraFilter').value && field(row, 'ERA') !== $('eraFilter').value) return false;
     if ($('rangeFilter').value && field(row, 'RANGE') !== $('rangeFilter').value) return false;
     if ($('doctorFilter').value && field(row, 'DOCTOR') !== $('doctorFilter').value) return false;
     if ($('libraryFilter').value && field(row, 'LIBRARY') !== $('libraryFilter').value) return false;
+    if (writerQuery && !splitCredits(field(row, 'WRITER')).some(name => name.toLocaleLowerCase().includes(writerQuery))) return false;
     if (q) {
       const haystack = [
         field(row, 'ID'), field(row, 'TITLE'), field(row, 'GROUP'), field(row, 'ERA'),
@@ -158,8 +201,8 @@ function renderCatalogue() {
               : '<th scope="col">ID</th><th scope="col">Title</th><th scope="col">Range</th><th scope="col">Release</th><th scope="col">Library</th><th scope="col">Release date</th>'}</tr></thead>
             <tbody>${era.rows.map(row => `<tr class="${field(row, 'ID').includes('–') ? 'unresolved-id' : ''}">
               <td class="id-cell">${escapeHtml(field(row, 'ID') || '—')}</td>
-              <td><button type="button" class="title-button" data-record-id="${escapeHtml(field(row, 'ID'))}">${formatTitle(field(row, 'TITLE') || 'Untitled')}</button></td>
-              ${state.compactView ? '' : `<td>${field(row, 'RANGE') ? `<span class="tag">${escapeHtml(field(row, 'RANGE'))}</span>` : '—'}</td>
+              <td><button type="button" class="title-button"${titleColourStyle(row)} data-record-id="${escapeHtml(field(row, 'ID'))}">${formatTitle(field(row, 'TITLE') || 'Untitled')}</button></td>
+              ${state.compactView ? '' : `<td>${field(row, 'RANGE') ? `<span class="tag"${rangeColour(row) ? ` style="--range-colour:${rangeColour(row)};--range-bg:${darkenHexColour(rangeColour(row))}"` : ''}>${escapeHtml(field(row, 'RANGE'))}</span>` : '—'}</td>
               <td>${escapeHtml(field(row, 'RELEASE') || '—')}</td>
               <td>${escapeHtml(field(row, 'LIBRARY') || '—')}</td>
               <td>${escapeHtml(field(row, 'RELEASE DATE') || '—')}</td>`}
@@ -268,6 +311,11 @@ function showDetail(row) {
       const statusClass = status === 'yes' ? 'library-status-yes' : status === 'no' ? 'library-status-no' : status === 'cd only' ? 'library-status-cd' : '';
       return `<div class="meta-item"><dt>${label}</dt><dd>${value ? `<span class="library-status ${statusClass}">${escapeHtml(value)}</span>` : '—'}</dd></div>`;
     }
+    if (name === 'RANGE' && value) {
+      const colour = rangeColour(row);
+      const pillStyle = colour ? ` style="--range-colour:${colour};--range-bg:${darkenHexColour(colour)}"` : '';
+      return `<div class="meta-item"><dt>${escapeHtml(label)}</dt><dd><span class="tag"${pillStyle}>${escapeHtml(value)}</span></dd></div>`;
+    }
     return `<div class="meta-item"><dt>${escapeHtml(label)}</dt><dd>${escapeHtml(value || '—')}</dd></div>`;
   }).join('');
   const synopsis = field(row, 'SYNOPSIS');
@@ -275,7 +323,7 @@ function showDetail(row) {
   $('detailPanel').innerHTML = `
     <div class="detail-top"><p class="detail-kicker">Doctor Who · Catalogue entry</p><button id="closeDetail" class="button button-secondary" type="button" aria-label="Close details">Close details ✕</button></div>
     <figure class="cover-art detail-cover">${cover ? `<img src="${escapeHtml(cover)}" alt="Cover art for ${escapeHtml(field(row, 'TITLE') || 'this item')}" loading="eager"><figcaption>Cover art</figcaption>` : `<div class="cover-placeholder">No cover art supplied yet.<br><span>Add a direct image URL in the <strong>COVER ART</strong> column.</span></div>`}</figure>
-    <header class="detail-heading"><h2 id="detailTitle" class="detail-title">${formatTitle(field(row, 'TITLE') || 'Untitled')}</h2></header>
+    <header class="detail-heading"${titleColourStyle(row)}><h2 id="detailTitle" class="detail-title">${formatTitle(field(row, 'TITLE') || 'Untitled')}</h2></header>
     <section class="synopsis-section" aria-labelledby="synopsisHeading"><h3 id="synopsisHeading">Synopsis</h3><p class="synopsis-text">${synopsisContent}</p></section>
     <div class="detail-divider" role="separator" aria-hidden="true"></div>
     <section class="story-details" aria-labelledby="storyDetailsHeading"><h3 id="storyDetailsHeading">Story details</h3><dl class="detail-meta">${meta}</dl></section>`;
@@ -300,6 +348,7 @@ async function loadCatalogue({ manual = false } = {}) {
     if (!parsed.records.length || !parsed.headers.length) throw new Error('The CSV appears to be empty.');
     state.headers = parsed.headers;
     state.rows = normalizeCatalogueRows(parsed.records).filter(row => !isExcluded(row));
+    await loadRangeColours();
     localStorage.setItem(CACHE_KEY, text);
     populateFilters();
     renderCatalogue();
@@ -315,6 +364,7 @@ async function loadCatalogue({ manual = false } = {}) {
       const parsed = parseCSV(cached);
       state.headers = parsed.headers;
       state.rows = normalizeCatalogueRows(parsed.records).filter(row => !isExcluded(row));
+      await loadRangeColours();
       populateFilters(); renderCatalogue();
       $('statusText').textContent = `Offline copy · Could not refresh from Google Sheets (${error.message})`;
     } else {
@@ -327,7 +377,7 @@ async function loadCatalogue({ manual = false } = {}) {
     $('refreshButton').innerHTML = '<span aria-hidden="true">↻</span> Refresh catalogue';
   }
 }
-['searchInput', 'groupFilter', 'eraFilter', 'rangeFilter', 'doctorFilter', 'libraryFilter'].forEach(id => $(id).addEventListener(id === 'searchInput' ? 'input' : 'change', renderCatalogue));
+['searchInput', 'writerSearchInput', 'groupFilter', 'eraFilter', 'rangeFilter', 'doctorFilter', 'libraryFilter'].forEach(id => $(id).addEventListener(['searchInput', 'writerSearchInput'].includes(id) ? 'input' : 'change', renderCatalogue));
 $('compactViewToggle').checked = state.compactView;
 $('compactViewToggle').addEventListener('change', () => {
   state.compactView = $('compactViewToggle').checked;
