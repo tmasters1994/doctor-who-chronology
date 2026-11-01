@@ -60,8 +60,8 @@ tbody tr:hover { background: rgba(215,169,107,.06); }
 /* Entries whose ID contains an en dash are visible but marked as unresolved. */
 .catalogue-table tbody tr.unresolved-id td { color: var(--muted); }
 .catalogue-table tbody tr.unresolved-id .id-cell { color: var(--muted); }
-.catalogue-table tbody tr.unresolved-id .title-button { color: var(--muted); }
-.catalogue-table tbody tr.unresolved-id .title-button:hover { color: var(--muted); }
+.catalogue-table tbody tr.unresolved-id .title-button { color: var(--range-colour, var(--muted)); }
+.catalogue-table tbody tr.unresolved-id .title-button:hover { color: var(--range-colour, var(--muted)); }
 .catalogue-table tbody tr.unresolved-id:hover { background: rgba(255,255,255,.025); }
 .title-main { display: block; font-weight: 400; color: var(--range-colour, inherit); }
 .title-subtitle { display: block; font-family: "Calibri Light", "Segoe UI Light", Calibri, "Segoe UI", Arial, sans-serif; font-weight: 200; }

@@ -93,6 +93,16 @@ function uniqueValues(rows, name) {
 function splitCredits(value) {
   return String(value ?? '').split(';').map(name => name.trim()).filter(Boolean);
 }
+// Accept common variants of the writer column heading so the separate writer
+// search still works if the sheet labels the field WRITERS, AUTHOR, etc.
+function writerCredits(row) {
+  const aliases = ['WRITER', 'WRITERS', 'AUTHOR', 'AUTHORS', 'SCRIPT WRITER', 'SCRIPTWRITER', 'WRITTEN BY'];
+  for (const name of aliases) {
+    const key = Object.keys(row).find(k => normalizeHeader(k) === name);
+    if (key && String(row[key] ?? '').trim()) return splitCredits(row[key]);
+  }
+  return [];
+}
 
 // Editable range-to-colour associations are loaded from a second published CSV tab.
 function normalizeHexColour(value) {
@@ -108,8 +118,11 @@ function darkenHexColour(hex, factor = 0.34) {
   const channels = [1, 3, 5].map(i => Math.round(parseInt(normalized.slice(i, i + 2), 16) * factor));
   return '#' + channels.map(value => value.toString(16).padStart(2, '0')).join('');
 }
+function normalizeRangeName(value) {
+  return String(value ?? '').normalize('NFKC').replace(/\\s+/g, ' ').trim().toLocaleLowerCase();
+}
 function rangeColour(row) {
-  return state.rangeColours.get(field(row, 'RANGE').toLocaleLowerCase()) || '';
+  return state.rangeColours.get(normalizeRangeName(field(row, 'RANGE'))) || '';
 }
 function titleColourStyle(row) {
   const colour = rangeColour(row);
@@ -125,9 +138,11 @@ async function loadRangeColours() {
     for (const row of parsed.records) {
       const name = field(row, 'RANGE');
       const colour = normalizeHexColour(field(row, 'COLOUR'));
-      if (name && colour) next.set(name.toLocaleLowerCase(), colour);
+      if (name && colour) next.set(normalizeRangeName(name), colour);
     }
     state.rangeColours = next;
+    console.info(`Range colours loaded: ${next.size} valid mappings`, [...next.entries()]);
+    if (!next.size) console.warn('Range colour CSV loaded, but no valid RANGE/COLOUR mappings were found. Check the published tab headers and hex values.');
   } catch (error) {
     console.warn('Could not load range colour associations:', error);
   }
@@ -153,13 +168,13 @@ function filteredRows() {
     if ($('rangeFilter').value && field(row, 'RANGE') !== $('rangeFilter').value) return false;
     if ($('doctorFilter').value && field(row, 'DOCTOR') !== $('doctorFilter').value) return false;
     if ($('libraryFilter').value && field(row, 'LIBRARY') !== $('libraryFilter').value) return false;
-    if (writerQuery && !splitCredits(field(row, 'WRITER')).some(name => name.toLocaleLowerCase().includes(writerQuery))) return false;
+    if (writerQuery && !writerCredits(row).some(name => name.toLocaleLowerCase().includes(writerQuery))) return false;
     if (q) {
       const haystack = [
         field(row, 'ID'), field(row, 'TITLE'), field(row, 'GROUP'), field(row, 'ERA'),
         field(row, 'RANGE'), field(row, 'RELEASE'), field(row, 'LIBRARY'),
         field(row, 'RELEASE DATE'), field(row, 'DOCTOR'),
-        ...splitCredits(field(row, 'WRITER')),
+        ...writerCredits(row),
         ...splitCredits(field(row, 'PUBLISHER')),
         field(row, 'SYNOPSIS')
       ].join(' ').toLocaleLowerCase();
@@ -352,7 +367,13 @@ async function loadCatalogue({ manual = false } = {}) {
     localStorage.setItem(CACHE_KEY, text);
     populateFilters();
     renderCatalogue();
-    $('statusText').textContent = `Connected to Google Sheets · Updated ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+    const hasWriterColumn = state.headers.some(h => ['WRITER', 'WRITERS', 'AUTHOR', 'AUTHORS', 'SCRIPT WRITER', 'SCRIPTWRITER', 'WRITTEN BY'].includes(normalizeHeader(h)));
+    const colourStatus = state.rangeColours.size
+      ? ` · ${state.rangeColours.size} range colours loaded`
+      : ' · no range colours loaded (check RANGE COLOURS tab publication)';
+    $('statusText').textContent = (hasWriterColumn
+      ? `Connected to Google Sheets · Updated ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+      : 'Connected, but writer search has no data: add a WRITER column to the published sheet, then republish it.') + colourStatus;
     if ($('detailPanel').open && state.selected) {
       const selectedId = field(state.selected, 'ID');
       const refreshed = state.rows.find(r => field(r, 'ID') === selectedId);
