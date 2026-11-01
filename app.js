@@ -3,7 +3,7 @@
 const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRHeYBfAFZj_bhEH4ncnGPwccoF8JaAxsRYzuaeJguThQXLWldk87ewRZhrwm5eH5yZs_iKCdBx3pEf/pub?output=csv';
 const CACHE_KEY = 'dw-chronology-csv-v5';
 // Set this to the published CSV URL for the RANGE COLOURS tab. See README.md.
-const RANGE_COLOURS_CSV_URL = '';
+const RANGE_COLOURS_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRHeYBfAFZj_bhEH4ncnGPwccoF8JaAxsRYzuaeJguThQXLWldk87ewRZhrwm5eH5yZs_iKCdBx3pEf/pub?gid=92377743&single=true&output=csv';
 const $ = (id) => document.getElementById(id);
 const state = { rows: [], headers: [], selected: null, loading: false, rangeColours: new Map(), compactView: localStorage.getItem('dw-chronology-compact-view') === 'true' };
 
