@@ -104,3 +104,5 @@ tbody tr:hover { background: rgba(215,169,107,.06); }
 @media (max-width: 1050px) { .toolbar { grid-template-columns: repeat(3, minmax(0, 1fr)); } .search-label, .writer-search-label { grid-column: span 3; } }
 @media (max-width: 700px) { .status-line { flex-wrap: wrap; } .compact-toggle { margin-left: 0; } .site-header { padding: 28px 18px 22px; flex-direction: column; align-items: stretch; } .site-header .button { align-self: start; } main { padding: 18px 14px 38px; } .toolbar { grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 12px; } .search-label, .writer-search-label { grid-column: span 2; } .status-line { font-size: .8rem; } .detail-panel { padding: 17px; width: calc(100vw - 24px); max-height: 90vh; } .cover-art { width: 100%; } .cover-art img { max-width: none; } .detail-meta { grid-template-columns: 1fr 1fr; } .site-footer { padding: 16px 18px 24px; flex-direction: column; } }
 @media (max-width: 420px) { .toolbar { grid-template-columns: 1fr; } .search-label, .writer-search-label { grid-column: auto; } .detail-meta { grid-template-columns: 1fr; } }
+
+.collection-tag { margin: 0 5px 5px 0; }

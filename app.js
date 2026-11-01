@@ -316,11 +316,15 @@ function sampleCoverPalette(url) {
 function showDetail(row) {
   state.selected = row;
   resetDetailPalette();
-  const details = ['DOCTOR', 'ID', 'GROUP', 'ERA', 'RANGE', 'RELEASE', 'RELEASE DATE', 'WRITER', 'PUBLISHER', 'LIBRARY'];
+  const details = ['DOCTOR', 'ID', 'GROUP', 'ERA', 'RANGE', 'RELEASE', 'RELEASE DATE', 'WRITER', 'PUBLISHER', 'COLLECTION', 'LIBRARY'];
   const cover = safeImageUrl(field(row, 'COVER ART')) || safeImageUrl(field(row, 'COVERART')) || safeImageUrl(field(row, 'COVER'));
   const meta = details.map(name => {
     const value = field(row, name);
     const label = name === 'RELEASE DATE' ? 'Release date' : name[0] + name.slice(1).toLowerCase();
+    if (name === 'COLLECTION') {
+      const collections = splitCredits(value);
+      return `<div class="meta-item"><dt>Collection</dt><dd>${collections.length ? collections.map(item => `<span class="tag collection-tag">${escapeHtml(item)}</span>`).join(' ') : '—'}</dd></div>`;
+    }
     if (name === 'LIBRARY') {
       const status = value.toLocaleLowerCase();
       const statusClass = status === 'yes' ? 'library-status-yes' : status === 'no' ? 'library-status-no' : status === 'cd only' ? 'library-status-cd' : '';
