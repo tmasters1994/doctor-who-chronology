@@ -158,17 +158,19 @@ function populateFilters() {
   setOptions($('rangeFilter'), uniqueValues(state.rows, 'RANGE'), 'All ranges');
   setOptions($('doctorFilter'), uniqueValues(state.rows, 'DOCTOR'), 'All Doctors');
   setOptions($('libraryFilter'), uniqueValues(state.rows, 'LIBRARY'), 'All items');
+  const writers = [...new Set(state.rows.flatMap(row => writerCredits(row)))].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+  setOptions($('writerFilter'), writers, 'All writers');
 }
 function filteredRows() {
   const q = $('searchInput').value.trim().toLocaleLowerCase();
-  const writerQuery = $('writerSearchInput').value.trim().toLocaleLowerCase();
+  const writerQuery = $('writerFilter').value.trim().toLocaleLowerCase();
   return state.rows.filter(row => {
     if ($('groupFilter').value && field(row, 'GROUP') !== $('groupFilter').value) return false;
     if ($('eraFilter').value && field(row, 'ERA') !== $('eraFilter').value) return false;
     if ($('rangeFilter').value && field(row, 'RANGE') !== $('rangeFilter').value) return false;
     if ($('doctorFilter').value && field(row, 'DOCTOR') !== $('doctorFilter').value) return false;
     if ($('libraryFilter').value && field(row, 'LIBRARY') !== $('libraryFilter').value) return false;
-    if (writerQuery && !writerCredits(row).some(name => name.toLocaleLowerCase().includes(writerQuery))) return false;
+    if (writerQuery && !writerCredits(row).some(name => name.toLocaleLowerCase() === writerQuery)) return false;
     if (q) {
       const haystack = [
         field(row, 'ID'), field(row, 'TITLE'), field(row, 'GROUP'), field(row, 'ERA'),
@@ -402,7 +404,8 @@ async function loadCatalogue({ manual = false } = {}) {
     $('refreshButton').innerHTML = '<span aria-hidden="true">↻</span> Refresh catalogue';
   }
 }
-['searchInput', 'writerSearchInput', 'groupFilter', 'eraFilter', 'rangeFilter', 'doctorFilter', 'libraryFilter'].forEach(id => $(id).addEventListener(['searchInput', 'writerSearchInput'].includes(id) ? 'input' : 'change', renderCatalogue));
+['writerFilter', 'groupFilter', 'eraFilter', 'rangeFilter', 'doctorFilter', 'libraryFilter'].forEach(id => $(id).addEventListener('change', renderCatalogue));
+$('searchInput').addEventListener('input', renderCatalogue);
 $('compactViewToggle').checked = state.compactView;
 $('compactViewToggle').addEventListener('change', () => {
   state.compactView = $('compactViewToggle').checked;
