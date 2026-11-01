@@ -46,6 +46,8 @@ function isExcluded(row) {
 function normalizeCatalogueRows(records) {
   let currentGroup = '';
   let currentEra = '';
+  let groupSection = 0;
+  let eraSection = 0;
   const output = [];
   for (const source of records) {
     const row = { ...source };
@@ -54,32 +56,44 @@ function normalizeCatalogueRows(records) {
     const id = field(row, 'ID');
     const title = field(row, 'TITLE');
 
-    // A heading row has a group or era value but no catalogue ID or title.
+    // Dedicated GROUP heading rows always begin a new section, even when the
+    // same group name appeared earlier in the sheet.
     if (!id && !title && group) {
-      // A GROUP heading only starts a new group when its name actually changes.
-      // Repeated headings with the same name are treated as redundant and do not
-      // reset the active ERA or create another group section in the app.
-      if (group !== currentGroup) {
-        currentGroup = group;
-        currentEra = '';
-      }
+      currentGroup = group;
+      currentEra = '';
+      groupSection++;
+      eraSection++;
       continue;
     }
     if (!id && !title && era) {
       currentEra = era;
+      eraSection++;
       continue;
     }
     // Ignore fully empty/non-catalogue rows.
     if (!id && !title) continue;
 
-    // Flat-layout rows may still specify these values directly; update context
-    // from them, then fill only missing values on data rows.
-    if (group) currentGroup = group;
-    if (era) currentEra = era;
+    // Also support flat sheets: a changed GROUP or ERA value starts a new
+    // consecutive section. Repeated names later in the sheet remain distinct.
+    if (group && group !== currentGroup) {
+      currentGroup = group;
+      currentEra = '';
+      groupSection++;
+      eraSection++;
+    }
+    if (era && era !== currentEra) {
+      currentEra = era;
+      eraSection++;
+    }
+
     const groupKey = Object.keys(row).find(k => normalizeHeader(k) === 'GROUP') || 'GROUP';
     const eraKey = Object.keys(row).find(k => normalizeHeader(k) === 'ERA') || 'ERA';
     if (!group) row[groupKey] = currentGroup;
     if (!era) row[eraKey] = currentEra;
+
+    // Internal section markers preserve the exact sequence of heading blocks.
+    row.__groupSection = groupSection;
+    row.__eraSection = eraSection;
     output.push(row);
   }
   return output;
@@ -193,18 +207,29 @@ function renderCatalogue() {
     $('catalogue').innerHTML = '<div class="empty-state">No catalogue entries match those filters.</div>';
     return;
   }
-  // Preserve the archive's Group > Era hierarchy while sorting each section by ID.
+  // Build consecutive Group > Era sections in source-sheet order.
+  // Do not use a global Map keyed by the displayed names: a group or era name
+  // may legitimately appear again later and must remain a separate section.
   const groups = [];
-  const groupMap = new Map();
+  let currentGroup = null;
+  let currentEra = null;
   for (const row of rows) {
     const groupName = field(row, 'GROUP') || 'Uncategorised';
-    if (!groupMap.has(groupName)) { const g = { name: groupName, eras: [], eraMap: new Map() }; groupMap.set(groupName, g); groups.push(g); }
-    const g = groupMap.get(groupName);
     const eraName = field(row, 'ERA') || 'Unspecified era';
-    if (!g.eraMap.has(eraName)) { const e = { name: eraName, rows: [] }; g.eraMap.set(eraName, e); g.eras.push(e); }
-    g.eraMap.get(eraName).rows.push(row);
-  }
+    const groupKey = row.__groupSection ?? groupName;
+    const eraKey = row.__eraSection ?? eraName;
 
+    if (!currentGroup || currentGroup.key !== groupKey) {
+      currentGroup = { key: groupKey, name: groupName, eras: [] };
+      groups.push(currentGroup);
+      currentEra = null;
+    }
+    if (!currentEra || currentEra.key !== eraKey) {
+      currentEra = { key: eraKey, name: eraName, rows: [] };
+      currentGroup.eras.push(currentEra);
+    }
+    currentEra.rows.push(row);
+  }
   $('catalogue').innerHTML = groups.map(group => `
     <section class="group-section">
       <div class="group-heading"><p class="eyebrow">CHRONOLOGY GROUP</p><h2>${escapeHtml(group.name)}</h2></div>
