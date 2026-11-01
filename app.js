@@ -354,6 +354,7 @@ function showDetail(row) {
     <div class="detail-top"><p class="detail-kicker">Doctor Who · Catalogue entry</p><button id="closeDetail" class="button button-secondary" type="button" aria-label="Close details">Close details ✕</button></div>
     <figure class="cover-art detail-cover">${cover ? `<img src="${escapeHtml(cover)}" alt="Cover art for ${escapeHtml(field(row, 'TITLE') || 'this item')}" loading="eager"><figcaption>Cover art</figcaption>` : `<div class="cover-placeholder">No cover art supplied yet.<br><span>Add a direct image URL in the <strong>COVER ART</strong> column.</span></div>`}</figure>
     <header class="detail-heading"${titleColourStyle(row)}><h2 id="detailTitle" class="detail-title">${formatTitle(field(row, 'TITLE') || 'Untitled')}</h2></header>
+    ${field(row, 'QUOTE') ? `<p class="story-quote"><em>${escapeHtml(field(row, 'QUOTE')).replace(/\\r?\\n/g, '<br>')}</em></p>` : ''}
     <section class="synopsis-section" aria-labelledby="synopsisHeading"><h3 id="synopsisHeading">Synopsis</h3><p class="synopsis-text">${synopsisContent}</p></section>
     <div class="detail-divider" role="separator" aria-hidden="true"></div>
     <section class="story-details" aria-labelledby="storyDetailsHeading"><h3 id="storyDetailsHeading">Story details</h3><dl class="detail-meta">${meta}</dl></section>`;

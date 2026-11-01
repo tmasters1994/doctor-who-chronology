@@ -117,3 +117,6 @@ tbody tr:hover { background: rgba(215,169,107,.06); }
 .catalogue-table.compact-table:has(.cover-thumb-cell) { min-width: 0; table-layout: fixed; }
 .catalogue-table.compact-table:has(.cover-thumb-cell) th:first-child,
 .catalogue-table.compact-table:has(.cover-thumb-cell) td:first-child { width: 76px; white-space: normal; }
+
+.story-quote { margin: 12px 0 0; color: var(--text); font-size: 1.02rem; line-height: 1.65; }
+.story-quote em { font-style: italic; }
