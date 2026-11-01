@@ -64,7 +64,7 @@ tbody tr:hover { background: rgba(215,169,107,.06); }
 .catalogue-table tbody tr.unresolved-id .title-button:hover { color: var(--range-colour, var(--muted)); }
 .catalogue-table tbody tr.unresolved-id:hover { background: rgba(255,255,255,.025); }
 .title-main { display: block; font-weight: 400; color: var(--range-colour, inherit); }
-.title-subtitle { display: block; font-family: "Calibri Light", "Segoe UI Light", Calibri, "Segoe UI", Arial, sans-serif; font-weight: 200; }
+.title-subtitle { display: block; font-family: "Calibri Light", "Segoe UI Light", Calibri, "Segoe UI", Arial, sans-serif; font-weight: 200; color: var(--range-colour, inherit); }
 .detail-title .title-subtitle { margin-top: .12em; }
 .subline { display: block; color: var(--muted); font-size: .78rem; font-weight: 400; margin-top: 2px; }
 .tag { display: inline-block; max-width: 100%; border: 1px solid color-mix(in srgb, var(--range-colour, #354765) 55%, transparent); border-radius: 999px; padding: 2px 8px; color: var(--range-colour, #c7d1e0); background: var(--range-bg, transparent); font-size: .75rem; white-space: normal; overflow-wrap: anywhere; }
