@@ -204,6 +204,15 @@ function renderCatalogue() {
     if (!g.eraMap.has(eraName)) { const e = { name: eraName, rows: [] }; g.eraMap.set(eraName, e); g.eras.push(e); }
     g.eraMap.get(eraName).rows.push(row);
   }
+
+  // Keep entries in natural ID order within each Group > Era section.
+  // Filtering (including the Doctor filter) must not change the chronology order.
+  for (const group of groups) {
+    for (const era of group.eras) {
+      era.rows.sort((a, b) => naturalCompare(field(a, 'ID'), field(b, 'ID')));
+    }
+  }
+
   $('catalogue').innerHTML = groups.map(group => `
     <section class="group-section">
       <div class="group-heading"><p class="eyebrow">CHRONOLOGY GROUP</p><h2>${escapeHtml(group.name)}</h2></div>
