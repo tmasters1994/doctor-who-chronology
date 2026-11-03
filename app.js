@@ -377,13 +377,18 @@ function showDetail(row) {
   const synopsis = field(row, 'SYNOPSIS');
   const synopsisContent = synopsis ? escapeHtml(synopsis).replace(/\r?\n/g, '<br>') : '<span class="synopsis-empty">No synopsis supplied yet. Add text to the <strong>SYNOPSIS</strong> column in your Google Sheet.</span>';
   $('detailPanel').innerHTML = `
-    <div class="detail-top"><p class="detail-kicker">Doctor Who · Catalogue entry</p><button id="closeDetail" class="button button-secondary" type="button" aria-label="Close details">Close details ✕</button></div>
-    <figure class="cover-art detail-cover">${cover ? `<img src="${escapeHtml(cover)}" alt="Cover art for ${escapeHtml(field(row, 'TITLE') || 'this item')}" loading="eager"><figcaption>Cover art</figcaption>` : `<div class="cover-placeholder">No cover art supplied yet.<br><span>Add a direct image URL in the <strong>COVER ART</strong> column.</span></div>`}</figure>
-    <header class="detail-heading"${titleColourStyle(row)}><h2 id="detailTitle" class="detail-title">${formatTitle(field(row, 'TITLE') || 'Untitled')}</h2></header>
-    ${field(row, 'QUOTE') ? `<p class="story-quote"><em>${escapeHtml(field(row, 'QUOTE')).replace(/\\r?\\n/g, '<br>')}</em></p>` : ''}
-    <section class="synopsis-section" aria-labelledby="synopsisHeading"><h3 id="synopsisHeading">Synopsis</h3><p class="synopsis-text">${synopsisContent}</p></section>
-    <div class="detail-divider" role="separator" aria-hidden="true"></div>
-    <section class="story-details" aria-labelledby="storyDetailsHeading"><h3 id="storyDetailsHeading">Story details</h3><dl class="detail-meta">${meta}</dl></section>`;
+    <section class="detail-hero" aria-labelledby="detailTitle">
+      ${cover ? `<img class="detail-hero-image" src="${escapeHtml(cover)}" alt="Cover art for ${escapeHtml(field(row, 'TITLE') || 'this item')}" loading="eager">` : `<div class="detail-hero-placeholder">No cover art supplied yet.<span>Add a direct image URL in the COVER ART column.</span></div>`}
+      <div class="detail-hero-shade" aria-hidden="true"></div>
+      <div class="detail-top"><p class="detail-kicker">${escapeHtml(field(row, 'DOCTOR') || 'Doctor Who')} · Catalogue entry</p><button id="closeDetail" class="button button-secondary" type="button" aria-label="Close details">✕</button></div>
+      <header class="detail-heading"${titleColourStyle(row)}><h2 id="detailTitle" class="detail-title">${formatTitle(field(row, 'TITLE') || 'Untitled')}</h2></header>
+    </section>
+    <div class="detail-content">
+      ${field(row, 'QUOTE') ? `<blockquote class="story-quote">${escapeHtml(field(row, 'QUOTE')).replace(/\\r?\\n/g, '<br>')}</blockquote>` : ''}
+      <section class="synopsis-section" aria-labelledby="synopsisHeading"><h3 id="synopsisHeading">Synopsis</h3><p class="synopsis-text">${synopsisContent}</p></section>
+      <div class="detail-divider" role="separator" aria-hidden="true"></div>
+      <section class="story-details" aria-labelledby="storyDetailsHeading"><h3 id="storyDetailsHeading">Story details</h3><dl class="detail-meta">${meta}</dl></section>
+    </div>`;
   if (!$('detailPanel').open) $('detailPanel').showModal();
   $('closeDetail').addEventListener('click', () => $('detailPanel').close());
   const img = $('detailPanel').querySelector('img');
