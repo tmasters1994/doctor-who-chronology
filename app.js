@@ -350,6 +350,27 @@ function sampleCoverPalette(url) {
   sampler.onerror = () => {}; // Graceful fallback: the modal remains navy.
   sampler.src = url;
 }
+function updateDetailHeroHeight() {
+  const hero = $('detailPanel').querySelector('.detail-hero');
+  const img = hero?.querySelector('.detail-hero-image');
+  if (!hero || !img || !img.naturalWidth || !img.naturalHeight) return;
+
+  const width = hero.clientWidth;
+  const ratio = img.naturalWidth / img.naturalHeight;
+  const mobile = window.innerWidth <= 700;
+  const baseline = mobile
+    ? Math.max(290, window.innerHeight * 0.48)
+    : Math.max(330, Math.min(window.innerHeight * 0.58, 590));
+
+  // Keep the established landscape treatment. For squarer/portrait artwork,
+  // increase the hero height toward the image's natural aspect ratio, capped
+  // so the artwork does not consume the entire dialog.
+  const naturalHeight = width / ratio;
+  const maxHeight = window.innerHeight * (mobile ? 0.78 : 0.82);
+  const targetHeight = Math.max(baseline, Math.min(naturalHeight, maxHeight));
+  hero.style.height = `${Math.round(targetHeight)}px`;
+}
+
 function showDetail(row) {
   state.selected = row;
   resetDetailPalette();
@@ -391,8 +412,21 @@ function showDetail(row) {
     </div>`;
   if (!$('detailPanel').open) $('detailPanel').showModal();
   $('closeDetail').addEventListener('click', () => $('detailPanel').close());
-  const img = $('detailPanel').querySelector('img');
-  if (img) img.addEventListener('error', () => { const figure = img.closest('figure'); figure.innerHTML = '<div class="cover-placeholder detail-error">Cover art could not be loaded. Check that the URL points directly to a publicly accessible image.</div>'; }, { once: true });
+  const img = $('detailPanel').querySelector('.detail-hero-image');
+  if (img) {
+    img.addEventListener('load', updateDetailHeroHeight, { once: true });
+    img.addEventListener('error', () => {
+      const hero = img.closest('.detail-hero');
+      if (hero) {
+        img.remove();
+        const placeholder = document.createElement('div');
+        placeholder.className = 'detail-hero-placeholder detail-error';
+        placeholder.textContent = 'Cover art could not be loaded. Check that the URL points directly to a publicly accessible image.';
+        hero.prepend(placeholder);
+      }
+    }, { once: true });
+    if (img.complete && img.naturalWidth) updateDetailHeroHeight();
+  }
   sampleCoverPalette(cover);
 }
 async function loadCatalogue({ manual = false } = {}) {
@@ -455,6 +489,7 @@ $('viewModeSelect').addEventListener('change', () => {
   renderCatalogue();
 });
 $('detailPanel').addEventListener('close', () => { state.selected = null; });
+window.addEventListener('resize', updateDetailHeroHeight);
 $('detailPanel').addEventListener('click', event => { if (event.target === $('detailPanel')) $('detailPanel').close(); });
 $('refreshButton').addEventListener('click', () => loadCatalogue({ manual: true }));
 if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));

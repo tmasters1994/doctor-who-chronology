@@ -71,7 +71,7 @@ tbody tr:hover { background: rgba(215,169,107,.06); }
 .empty-state { padding: 38px 20px; text-align: center; border: 1px dashed var(--line); border-radius: 12px; color: var(--muted); }
 .detail-panel { --detail-bg: #080a14; --detail-surface: #111522; --detail-border: #293044; width: min(1000px, calc(100vw - 36px)); max-width: none; max-height: min(92vh, 1000px); overflow: auto; padding: 0; border: 1px solid var(--detail-border); border-radius: 12px; background: var(--detail-bg); color: var(--text); box-shadow: 0 24px 90px rgba(0,0,0,.6); overscroll-behavior: contain; transition: background-color .25s ease, border-color .25s ease; }
 .detail-panel::backdrop { background: rgba(3, 6, 15, .82); backdrop-filter: blur(4px); overflow: hidden; overscroll-behavior: contain; }
-.detail-hero { position: relative; isolation: isolate; min-height: 330px; height: clamp(330px, 58vh, 590px); overflow: hidden; background: var(--detail-surface); }
+.detail-hero { position: relative; isolation: isolate; min-height: 330px; height: clamp(330px, 58vh, 590px); overflow: hidden; background: var(--detail-surface); transition: height .25s ease; }
 .detail-hero-image { position: absolute; inset: 0; z-index: -2; display: block; width: 100%; height: 100%; object-fit: cover; object-position: center 25%; }
 .detail-hero-shade { position: absolute; z-index: -1; inset: 0; background: linear-gradient(180deg, rgba(5,7,15,.48) 0%, rgba(5,7,15,.06) 28%, rgba(8,10,20,.18) 54%, var(--detail-bg) 100%); }
 .detail-hero-placeholder { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 8px; padding: 30px; color: var(--muted); text-align: center; }
@@ -122,8 +122,8 @@ tbody tr:hover { background: rgba(215,169,107,.06); }
 .catalogue-table.compact-table:has(.cover-thumb-cell) th:first-child,
 .catalogue-table.compact-table:has(.cover-thumb-cell) td:first-child { width: 76px; white-space: normal; }
 
-.story-quote { margin: 12px 0 0; color: var(--text); font-size: 1.02rem; line-height: 1.65; }
-.story-quote em { font-style: italic; }
+.story-quote { margin: 12px 0 0; padding: 0; border: 0; color: var(--text); font-family: inherit; font-size: 1.02rem; font-style: italic; line-height: 1.65; }
+
 
 @media (max-width: 700px) {
   .detail-panel { width: calc(100vw - 16px); max-height: 94vh; border-radius: 10px; }
