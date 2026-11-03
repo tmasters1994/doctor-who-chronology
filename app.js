@@ -288,6 +288,7 @@ function resetDetailPalette() {
   panel.style.setProperty('--detail-surface', '#172846');
   panel.style.setProperty('--detail-border', '#2a3b59');
   panel.style.setProperty('--detail-quote', 'hsl(215 28% 75%)');
+  panel.style.setProperty('--detail-title', 'hsl(215 28% 82%)');
 }
 function rgbToHsl(r, g, b) {
   r /= 255; g /= 255; b /= 255;
@@ -340,6 +341,8 @@ function applyCoverPalette(image) {
     // Match the quote to the cover-derived popup palette, but lift its lightness
     // substantially so it remains readable against the dark background.
     panel.style.setProperty('--detail-quote', `hsl(${Math.round(hue)} ${Math.round(saturation)}% 74%)`);
+    // Use the same cover-derived hue for the hero title, lifted further for legibility.
+    panel.style.setProperty('--detail-title', `hsl(${Math.round(hue)} ${Math.round(saturation)}% 82%)`);
   } catch (_) {
     // Canvas sampling can be blocked by cross-origin image hosts. Keep the default navy palette.
   }
