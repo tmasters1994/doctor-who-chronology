@@ -181,3 +181,9 @@ tbody tr:hover { background: rgba(215,169,107,.06); }
   .cover-lightbox { padding: 58px 12px 18px; }
   .cover-lightbox > img { max-width: 96vw; max-height: 84vh; }
 }
+
+.detail-no-cover-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; padding: 26px 30px 24px; background: var(--detail-bg); border-bottom: 1px solid var(--detail-border); }
+.detail-no-cover-header .detail-kicker { color: var(--muted); text-shadow: none; margin: 0 0 12px; }
+.detail-no-cover-header .detail-title { color: var(--detail-title, #dce6f5); text-shadow: none; }
+.detail-no-cover-header .button { flex: 0 0 auto; }
+@media (max-width: 700px) { .detail-no-cover-header { padding: 20px; } }

@@ -384,15 +384,19 @@ function showDetail(row) {
   const synopsis = field(row, 'SYNOPSIS');
   const synopsisContent = synopsis ? escapeHtml(synopsis).replace(/\r?\n/g, '<br>') : '<span class="synopsis-empty">No synopsis supplied yet. Add text to the <strong>SYNOPSIS</strong> column in your Google Sheet.</span>';
   $('detailPanel').innerHTML = `
-    <section class="detail-hero" aria-labelledby="detailTitle">
-      ${cover ? `<img class="detail-hero-image" src="${escapeHtml(cover)}" alt="Cover art for ${escapeHtml(field(row, 'TITLE') || 'this item')}" loading="eager">` : `<div class="detail-hero-placeholder">No cover art supplied yet.<span>Add a direct image URL in the COVER ART column.</span></div>`}
+    ${cover ? `<section class="detail-hero" aria-labelledby="detailTitle">
+      <img class="detail-hero-image" src="${escapeHtml(cover)}" alt="Cover art for ${escapeHtml(field(row, 'TITLE') || 'this item')}" loading="eager">
       <div class="detail-hero-shade" aria-hidden="true"></div>
       <div class="detail-top"><p class="detail-kicker">${escapeHtml(field(row, 'DOCTOR') || 'Doctor Who')} · Catalogue entry</p><button id="closeDetail" class="button button-secondary" type="button" aria-label="Close details">✕</button></div>
       <header class="detail-heading"${titleColourStyle(row)}>
-        ${cover ? `<button type="button" class="detail-cover-thumb" id="openCoverLightbox" aria-label="View full-size cover art"><img src="${escapeHtml(cover)}" alt="" loading="eager"></button>` : ''}
+        <button type="button" class="detail-cover-thumb" id="openCoverLightbox" aria-label="View full-size cover art"><img src="${escapeHtml(cover)}" alt="" loading="eager"></button>
         <h2 id="detailTitle" class="detail-title">${formatTitle(field(row, 'TITLE') || 'Untitled')}</h2>
       </header>
-    </section>
+    </section>` : `<header class="detail-no-cover-header">
+      <div><p class="detail-kicker">${escapeHtml(field(row, 'DOCTOR') || 'Doctor Who')} · Catalogue entry</p>
+      <h2 id="detailTitle" class="detail-title">${formatTitle(field(row, 'TITLE') || 'Untitled')}</h2></div>
+      <button id="closeDetail" class="button button-secondary" type="button" aria-label="Close details">✕</button>
+    </header>`}
     ${cover ? `<div class="cover-lightbox" id="coverLightbox" role="dialog" aria-modal="true" aria-label="Full-size cover art" hidden><button type="button" class="cover-lightbox-close" id="closeCoverLightbox" aria-label="Close full-size cover art">✕</button><img src="${escapeHtml(cover)}" alt="Full-size cover art for ${escapeHtml(field(row, 'TITLE') || 'this item')}"></div>` : ''}
     <div class="detail-content">
       ${field(row, 'QUOTE') ? `<blockquote class="story-quote">${escapeHtml(field(row, 'QUOTE')).replace(/\\r?\\n/g, '<br>')}</blockquote>` : ''}
