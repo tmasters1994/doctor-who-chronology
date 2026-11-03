@@ -109,7 +109,7 @@ tbody tr:hover { background: rgba(215,169,107,.06); }
 .detail-top .button { min-width: 38px; width: 38px; height: 38px; padding: 0; display: grid; place-items: center; border-color: rgba(255,255,255,.45); background: rgba(5,7,15,.5); color: #fff; border-radius: 50%; font-size: 1.05rem; }
 .detail-heading { position: absolute; z-index: 1; left: 30px; right: 30px; bottom: 36px; margin: 0; color: #fff; text-shadow: 0 2px 18px rgba(0,0,0,.72); }
 .detail-title { margin: 0; color: var(--detail-title, #fff); font-size: clamp(2rem, 5vw, 3.7rem); letter-spacing: -.04em; line-height: 1.04; }
-.detail-title .title-main, .detail-title .title-subtitle { display: block; }
+.detail-title .title-main, .detail-title .title-subtitle { display: block; color: var(--detail-title, #fff); }
 .detail-title .title-main { font-weight: 700; }
 .detail-title .title-subtitle { margin-top: .12em; font-family: "Inter", Arial, sans-serif; font-weight: 300; color: inherit; font-size: .68em; }
 .detail-content { padding: 30px 34px 36px; background: var(--detail-bg); }
