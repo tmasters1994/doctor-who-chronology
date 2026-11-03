@@ -1,5 +1,5 @@
-const CACHE_NAME = 'dw-chronology-shell-v23';
-const APP_SHELL = ['./', './index.html', './styles.css', './app.js', './manifest.webmanifest', './icon.svg'];
+const CACHE_NAME = 'dw-chronology-shell-v24';
+const APP_SHELL = ['./', './index.html', './styles.css', './app.js', './manifest.webmanifest', './icon.svg', './fonts/inter-regular.woff2', './fonts/inter-bold.woff2', './fonts/inter-extralight.woff2', './fonts/inter-italic.woff2'];
 self.addEventListener('install', event => event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(APP_SHELL)).then(() => self.skipWaiting())));
 self.addEventListener('activate', event => event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(key => key.startsWith('dw-chronology-shell-') && key !== CACHE_NAME).map(key => caches.delete(key)))).then(() => self.clients.claim())));
 self.addEventListener('fetch', event => {

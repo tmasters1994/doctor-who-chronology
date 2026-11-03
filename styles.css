@@ -1,3 +1,31 @@
+@font-face {
+  font-family: "Inter";
+  src: url("./fonts/inter-regular.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Inter";
+  src: url("./fonts/inter-bold.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Inter";
+  src: url("./fonts/inter-extralight.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 200;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Inter";
+  src: url("./fonts/inter-italic.woff2") format("woff2");
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+}
 :root {
   color-scheme: dark;
   --page: #060b18;
@@ -9,11 +37,11 @@
   --gold: #d7a96b;
   --gold-light: #f0c98f;
   --danger: #f0a6a6;
-  font-family: Calibri, "Segoe UI", Arial, sans-serif;
+  font-family: "Inter", Arial, sans-serif;
 }
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
-body { margin: 0; background: var(--page); color: var(--text); font-family: Calibri, "Segoe UI", Arial, sans-serif; font-size: 16px; line-height: 1.5; }
+body { margin: 0; background: var(--page); color: var(--text); font-family: "Inter", Arial, sans-serif; font-size: 16px; line-height: 1.5; }
 button, input, select { font: inherit; }
 button, select, input { color: var(--text); }
 .site-header { max-width: 1500px; margin: 0 auto; padding: 42px 30px 30px; display: flex; justify-content: space-between; align-items: end; gap: 28px; border-bottom: 1px solid var(--line); }
@@ -64,7 +92,7 @@ tbody tr:hover { background: rgba(215,169,107,.06); }
 .catalogue-table tbody tr.unresolved-id .title-button:hover { color: var(--range-colour, var(--muted)); }
 .catalogue-table tbody tr.unresolved-id:hover { background: rgba(255,255,255,.025); }
 .title-main { display: block; font-weight: 400; color: var(--range-colour, inherit); }
-.title-subtitle { display: block; font-family: "Calibri Light", "Segoe UI Light", Calibri, "Segoe UI", Arial, sans-serif; font-weight: 200; color: var(--range-colour, inherit); }
+.title-subtitle { display: block; font-family: "Inter", Arial, sans-serif; font-weight: 200; color: var(--range-colour, inherit); }
 .detail-title .title-subtitle { margin-top: .12em; }
 .subline { display: block; color: var(--muted); font-size: .78rem; font-weight: 400; margin-top: 2px; }
 .tag { display: inline-block; max-width: 100%; border: 1px solid color-mix(in srgb, var(--range-colour, #354765) 55%, transparent); border-radius: 999px; padding: 2px 8px; color: var(--range-colour, #c7d1e0); background: var(--range-bg, transparent); font-size: .75rem; white-space: normal; overflow-wrap: anywhere; }
@@ -83,7 +111,7 @@ tbody tr:hover { background: rgba(215,169,107,.06); }
 .detail-title { margin: 0; font-size: clamp(2rem, 5vw, 3.7rem); letter-spacing: -.04em; line-height: 1.04; }
 .detail-title .title-main, .detail-title .title-subtitle { display: block; }
 .detail-title .title-main { font-weight: 700; }
-.detail-title .title-subtitle { margin-top: .12em; font-family: "Calibri Light", "Segoe UI Light", Calibri, "Segoe UI", Arial, sans-serif; font-weight: 300; color: inherit; font-size: .68em; }
+.detail-title .title-subtitle { margin-top: .12em; font-family: "Inter", Arial, sans-serif; font-weight: 300; color: inherit; font-size: .68em; }
 .detail-content { padding: 30px 34px 36px; background: var(--detail-bg); }
 .detail-meta { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 22px; align-content: start; margin: 0; }
 .meta-item { padding: 13px 12px; border-bottom: 1px solid color-mix(in srgb, var(--detail-border) 72%, transparent); background: color-mix(in srgb, var(--detail-surface) 72%, transparent); }
@@ -122,7 +150,7 @@ tbody tr:hover { background: rgba(215,169,107,.06); }
 .catalogue-table.compact-table:has(.cover-thumb-cell) th:first-child,
 .catalogue-table.compact-table:has(.cover-thumb-cell) td:first-child { width: 76px; white-space: normal; }
 
-.story-quote { margin: 12px 0 0; padding: 0; border: 0; color: var(--detail-quote, var(--text)); font-family: inherit; font-size: 1.02rem; font-style: italic; line-height: 1.65; }
+.story-quote { margin: 12px 0 0; padding: 0; border: 0; color: var(--detail-quote, var(--text)); font-family: "Inter", Arial, sans-serif; font-size: 1.02rem; font-style: italic; line-height: 1.65; }
 
 
 @media (max-width: 700px) {
