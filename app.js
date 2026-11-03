@@ -287,6 +287,7 @@ function resetDetailPalette() {
   panel.style.setProperty('--detail-bg', '#12213d');
   panel.style.setProperty('--detail-surface', '#172846');
   panel.style.setProperty('--detail-border', '#2a3b59');
+  panel.style.setProperty('--detail-quote', 'hsl(215 28% 75%)');
 }
 function rgbToHsl(r, g, b) {
   r /= 255; g /= 255; b /= 255;
@@ -336,6 +337,9 @@ function applyCoverPalette(image) {
     panel.style.setProperty('--detail-bg', `hsl(${Math.round(hue)} ${Math.round(saturation)}% 9%)`);
     panel.style.setProperty('--detail-surface', `hsl(${Math.round(hue)} ${Math.round(saturation)}% 13%)`);
     panel.style.setProperty('--detail-border', `hsl(${Math.round(hue)} ${Math.round(Math.min(42, saturation + 4))}% 25%)`);
+    // Match the quote to the cover-derived popup palette, but lift its lightness
+    // substantially so it remains readable against the dark background.
+    panel.style.setProperty('--detail-quote', `hsl(${Math.round(hue)} ${Math.round(saturation)}% 74%)`);
   } catch (_) {
     // Canvas sampling can be blocked by cross-origin image hosts. Keep the default navy palette.
   }
@@ -350,27 +354,6 @@ function sampleCoverPalette(url) {
   sampler.onerror = () => {}; // Graceful fallback: the modal remains navy.
   sampler.src = url;
 }
-function updateDetailHeroHeight() {
-  const hero = $('detailPanel').querySelector('.detail-hero');
-  const img = hero?.querySelector('.detail-hero-image');
-  if (!hero || !img || !img.naturalWidth || !img.naturalHeight) return;
-
-  const width = hero.clientWidth;
-  const ratio = img.naturalWidth / img.naturalHeight;
-  const mobile = window.innerWidth <= 700;
-  const baseline = mobile
-    ? Math.max(290, window.innerHeight * 0.48)
-    : Math.max(330, Math.min(window.innerHeight * 0.58, 590));
-
-  // Keep the established landscape treatment. For squarer/portrait artwork,
-  // increase the hero height toward the image's natural aspect ratio, capped
-  // so the artwork does not consume the entire dialog.
-  const naturalHeight = width / ratio;
-  const maxHeight = window.innerHeight * (mobile ? 0.78 : 0.82);
-  const targetHeight = Math.max(baseline, Math.min(naturalHeight, maxHeight));
-  hero.style.height = `${Math.round(targetHeight)}px`;
-}
-
 function showDetail(row) {
   state.selected = row;
   resetDetailPalette();
@@ -402,8 +385,12 @@ function showDetail(row) {
       ${cover ? `<img class="detail-hero-image" src="${escapeHtml(cover)}" alt="Cover art for ${escapeHtml(field(row, 'TITLE') || 'this item')}" loading="eager">` : `<div class="detail-hero-placeholder">No cover art supplied yet.<span>Add a direct image URL in the COVER ART column.</span></div>`}
       <div class="detail-hero-shade" aria-hidden="true"></div>
       <div class="detail-top"><p class="detail-kicker">${escapeHtml(field(row, 'DOCTOR') || 'Doctor Who')} · Catalogue entry</p><button id="closeDetail" class="button button-secondary" type="button" aria-label="Close details">✕</button></div>
-      <header class="detail-heading"${titleColourStyle(row)}><h2 id="detailTitle" class="detail-title">${formatTitle(field(row, 'TITLE') || 'Untitled')}</h2></header>
+      <header class="detail-heading"${titleColourStyle(row)}>
+        ${cover ? `<button type="button" class="detail-cover-thumb" id="openCoverLightbox" aria-label="View full-size cover art"><img src="${escapeHtml(cover)}" alt="" loading="eager"></button>` : ''}
+        <h2 id="detailTitle" class="detail-title">${formatTitle(field(row, 'TITLE') || 'Untitled')}</h2>
+      </header>
     </section>
+    ${cover ? `<div class="cover-lightbox" id="coverLightbox" role="dialog" aria-modal="true" aria-label="Full-size cover art" hidden><button type="button" class="cover-lightbox-close" id="closeCoverLightbox" aria-label="Close full-size cover art">✕</button><img src="${escapeHtml(cover)}" alt="Full-size cover art for ${escapeHtml(field(row, 'TITLE') || 'this item')}"></div>` : ''}
     <div class="detail-content">
       ${field(row, 'QUOTE') ? `<blockquote class="story-quote">${escapeHtml(field(row, 'QUOTE')).replace(/\\r?\\n/g, '<br>')}</blockquote>` : ''}
       <section class="synopsis-section" aria-labelledby="synopsisHeading"><h3 id="synopsisHeading">Synopsis</h3><p class="synopsis-text">${synopsisContent}</p></section>
@@ -412,20 +399,30 @@ function showDetail(row) {
     </div>`;
   if (!$('detailPanel').open) $('detailPanel').showModal();
   $('closeDetail').addEventListener('click', () => $('detailPanel').close());
-  const img = $('detailPanel').querySelector('.detail-hero-image');
-  if (img) {
-    img.addEventListener('load', updateDetailHeroHeight, { once: true });
-    img.addEventListener('error', () => {
-      const hero = img.closest('.detail-hero');
-      if (hero) {
-        img.remove();
-        const placeholder = document.createElement('div');
-        placeholder.className = 'detail-hero-placeholder detail-error';
-        placeholder.textContent = 'Cover art could not be loaded. Check that the URL points directly to a publicly accessible image.';
-        hero.prepend(placeholder);
-      }
+
+  const heroImage = $('detailPanel').querySelector('.detail-hero-image');
+  if (heroImage) heroImage.addEventListener('error', () => {
+    heroImage.remove();
+    const placeholder = document.createElement('div');
+    placeholder.className = 'detail-hero-placeholder detail-error';
+    placeholder.textContent = 'Cover art could not be loaded. Check that the URL points directly to a publicly accessible image.';
+    $('detailPanel').querySelector('.detail-hero').prepend(placeholder);
+  }, { once: true });
+
+  const lightbox = $('coverLightbox');
+  const openLightbox = $('openCoverLightbox');
+  const closeLightbox = $('closeCoverLightbox');
+  if (lightbox && openLightbox && closeLightbox) {
+    const hideLightbox = () => { lightbox.hidden = true; openLightbox.focus(); };
+    openLightbox.addEventListener('click', () => { lightbox.hidden = false; closeLightbox.focus(); });
+    closeLightbox.addEventListener('click', hideLightbox);
+    lightbox.addEventListener('click', event => { if (event.target === lightbox) hideLightbox(); });
+    lightbox.querySelector('img').addEventListener('error', () => {
+      lightbox.querySelector('img').alt = 'The full-size cover art could not be loaded.';
     }, { once: true });
-    if (img.complete && img.naturalWidth) updateDetailHeroHeight();
+    lightbox.addEventListener('keydown', event => {
+      if (event.key === 'Escape') { event.stopPropagation(); hideLightbox(); }
+    });
   }
   sampleCoverPalette(cover);
 }
@@ -489,7 +486,6 @@ $('viewModeSelect').addEventListener('change', () => {
   renderCatalogue();
 });
 $('detailPanel').addEventListener('close', () => { state.selected = null; });
-window.addEventListener('resize', updateDetailHeroHeight);
 $('detailPanel').addEventListener('click', event => { if (event.target === $('detailPanel')) $('detailPanel').close(); });
 $('refreshButton').addEventListener('click', () => loadCatalogue({ manual: true }));
 if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
