@@ -11,10 +11,11 @@ A static progressive web app for a personal Doctor Who chronology catalogue. It 
 
 ## Google Sheet columns
 
-The app recognises these headers (case-insensitive): `ID`, `TITLE`, `GROUP`, `ERA`, `RANGE`, `RELEASE`, `LIBRARY`, `RELEASE DATE`, `DOCTOR`, `COVER ART`, and `SYNOPSIS`.
+The app recognises these headers (case-insensitive): `ID`, `TITLE`, `GROUP`, `ERA`, `RANGE`, `RELEASE`, `LIBRARY`, `RELEASE DATE`, `DOCTOR`, `COVER ART`, `BACKGROUND ART`, and `SYNOPSIS`.
 
 - Add `DOCTOR` for the Doctor associated with an entry.
-- Add `COVER ART` with a direct, publicly accessible `https://` image URL. Cover art appears only in the entry details panel, not in the chronology table.
+- Add `COVER ART` with a direct, publicly accessible `https://` image URL. It is used for the cover thumbnail and full-size cover lightbox in the entry details panel.
+- Optionally add `BACKGROUND ART` with a direct, publicly accessible `https://` image URL. It is used for the large hero image at the top of the entry details panel. If the cell is blank, the app uses `COVER ART` for the hero image instead. If both are blank, the compact no-art header is shown.
 - Column order does not matter; the app reads values by header name.
 - Entries whose `ID` contains `TBD`, an en dash (`–`) or em dash (`—`), or whose ID is just a hyphen (`-`), are retained in the spreadsheet but excluded from the visible catalogue.
 

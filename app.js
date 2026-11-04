@@ -362,6 +362,9 @@ function showDetail(row) {
   resetDetailPalette();
   const details = ['DOCTOR', 'ID', 'GROUP', 'ERA', 'RANGE', 'RELEASE', 'RELEASE DATE', 'WRITER', 'PUBLISHER', 'COLLECTION', 'LIBRARY'];
   const cover = safeImageUrl(field(row, 'COVER ART')) || safeImageUrl(field(row, 'COVERART')) || safeImageUrl(field(row, 'COVER'));
+  // BACKGROUND ART is an optional, separate hero image. Fall back to COVER ART
+  // when it is blank so existing spreadsheet rows continue to work unchanged.
+  const backgroundArt = safeImageUrl(field(row, 'BACKGROUND ART')) || cover;
   const meta = details.map(name => {
     const value = field(row, name);
     const label = name === 'RELEASE DATE' ? 'Release date' : name[0] + name.slice(1).toLowerCase();
@@ -384,12 +387,12 @@ function showDetail(row) {
   const synopsis = field(row, 'SYNOPSIS');
   const synopsisContent = synopsis ? escapeHtml(synopsis).replace(/\r?\n/g, '<br>') : '<span class="synopsis-empty">No synopsis supplied yet. Add text to the <strong>SYNOPSIS</strong> column in your Google Sheet.</span>';
   $('detailPanel').innerHTML = `
-    ${cover ? `<section class="detail-hero" aria-labelledby="detailTitle">
-      <img class="detail-hero-image" src="${escapeHtml(cover)}" alt="Cover art for ${escapeHtml(field(row, 'TITLE') || 'this item')}" loading="eager">
+    ${backgroundArt ? `<section class="detail-hero" aria-labelledby="detailTitle">
+      <img class="detail-hero-image" src="${escapeHtml(backgroundArt)}" alt="Background artwork for ${escapeHtml(field(row, 'TITLE') || 'this item')}" loading="eager">
       <div class="detail-hero-shade" aria-hidden="true"></div>
       <div class="detail-top"><p class="detail-kicker">${escapeHtml(field(row, 'DOCTOR') || 'Doctor Who')} · Catalogue entry</p><button id="closeDetail" class="button button-secondary" type="button" aria-label="Close details">✕</button></div>
       <header class="detail-heading"${titleColourStyle(row)}>
-        <button type="button" class="detail-cover-thumb" id="openCoverLightbox" aria-label="View full-size cover art"><img src="${escapeHtml(cover)}" alt="" loading="eager"></button>
+        ${cover ? `<button type="button" class="detail-cover-thumb" id="openCoverLightbox" aria-label="View full-size cover art"><img src="${escapeHtml(cover)}" alt="" loading="eager"></button>` : ''}
         <h2 id="detailTitle" class="detail-title">${formatTitle(field(row, 'TITLE') || 'Untitled')}</h2>
       </header>
     </section>` : `<header class="detail-no-cover-header">
@@ -412,7 +415,7 @@ function showDetail(row) {
     heroImage.remove();
     const placeholder = document.createElement('div');
     placeholder.className = 'detail-hero-placeholder detail-error';
-    placeholder.textContent = 'Cover art could not be loaded. Check that the URL points directly to a publicly accessible image.';
+    placeholder.textContent = 'Background art could not be loaded. Check that the URL points directly to a publicly accessible image.';
     $('detailPanel').querySelector('.detail-hero').prepend(placeholder);
   }, { once: true });
 
@@ -431,7 +434,7 @@ function showDetail(row) {
       if (event.key === 'Escape') { event.stopPropagation(); hideLightbox(); }
     });
   }
-  sampleCoverPalette(cover);
+  sampleCoverPalette(backgroundArt);
 }
 async function loadCatalogue({ manual = false } = {}) {
   if (state.loading) return;
